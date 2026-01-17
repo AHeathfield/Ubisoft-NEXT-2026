@@ -345,10 +345,10 @@ struct Mat4x4
     std::string GetString() const
     {
         std::string mat = 
-            "|" + std::to_string((int) m[0][0]) + "  " + std::to_string((int) m[0][1]) + "  " + std::to_string((int) m[0][2]) + "  " + std::to_string((int) m[0][3]) + "|\n" +
-            "|" + std::to_string((int) m[1][0]) + "  " + std::to_string((int) m[1][1]) + "  " + std::to_string((int) m[1][2]) + "  " + std::to_string((int) m[1][3]) + "|\n" +
-            "|" + std::to_string((int) m[2][0]) + "  " + std::to_string((int) m[2][1]) + "  " + std::to_string((int) m[2][2]) + "  " + std::to_string((int) m[2][3]) + "|\n" +
-            "|" + std::to_string((int) m[3][0]) + "  " + std::to_string((int) m[3][1]) + "  " + std::to_string((int) m[3][2]) + "  " + std::to_string((int) m[3][3]) + "|"
+            "\n|" + std::to_string(m[0][0]) + "  " + std::to_string(m[0][1]) + "  " + std::to_string(m[0][2]) + "  " + std::to_string(m[0][3]) + "|\n" +
+            "|" + std::to_string(m[1][0]) + "  " + std::to_string(m[1][1]) + "  " + std::to_string(m[1][2]) + "  " + std::to_string(m[1][3]) + "|\n" +
+            "|" + std::to_string(m[2][0]) + "  " + std::to_string(m[2][1]) + "  " + std::to_string(m[2][2]) + "  " + std::to_string(m[2][3]) + "|\n" +
+            "|" + std::to_string(m[3][0]) + "  " + std::to_string(m[3][1]) + "  " + std::to_string(m[3][2]) + "  " + std::to_string(m[3][3]) + "|"
         ;
 
         return mat;

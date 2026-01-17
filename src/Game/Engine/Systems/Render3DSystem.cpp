@@ -10,17 +10,23 @@
 
 void Render3DSystem::Init()
 {
-	float aspect_ratio = (float) APP_VIRTUAL_HEIGHT / (float) APP_VIRTUAL_WIDTH;
-	utility::log(std::to_string(aspect_ratio));
-	mRenderer.SetProjection(90.f, aspect_ratio, 0.1f, 1000.f);
+	// float aspect_ratio = (float) APP_VIRTUAL_HEIGHT / (float) APP_VIRTUAL_WIDTH;
 }
 
 void Render3DSystem::Update(float deltaTime)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-	// utility::log(std::to_string(mEntities.size()));
+    // Updating renderer
 	mRenderer.ClearRenderer();
+    if (mCamera != nullptr)
+    {
+        // utility::log(mCamera->GetProjectionMatrix().GetString());
+        mRenderer.SetCameraPosition(mCamera->GetTransform().GetPosition());
+        mRenderer.SetProjectionMatrix(mCamera->GetProjectionMatrix());
+        mRenderer.SetViewMatrix(mCamera->GetViewMatrix());
+    }
+
 	for (const auto& entity : mEntities)
 	{
 		auto& meshComp = coordinator.GetComponent<MeshComponent>(entity);
@@ -82,8 +88,8 @@ void Render3DSystem::DrawMesh(const Mesh& mesh, const Transform3DComponent& tran
 	// mRenderer.DrawMesh(mesh, transform.GetWorldMatrix());
 }
 
-void Render3DSystem::SetRenderCamera(Camera* camera)
+void Render3DSystem::SetCamera(Camera* camera)
 {
-	mRenderer.SetCamera(camera);
+    mCamera = camera;
 }
 

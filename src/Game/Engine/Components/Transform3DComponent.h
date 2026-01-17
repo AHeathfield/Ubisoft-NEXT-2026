@@ -4,6 +4,12 @@
 #include "../Math/Mat4x4.h"
 #include "../Math/Mat3x3.h"
 
+
+// Quick Note: Components in an ECS generally is just pure data (no private members)
+// however the wasChanged is important to update and this forces it to be correct value
+// There is overhead of the function calls but I think it's worth it
+
+
 // Currently rotation is euler angles that are converted into matrices, this method is error prone
 // Can make the system more stable by changing rotation to Quaternion, but that is a lot of work and changes...
 // Rotation for graphics and physics will use radians internally but externally will be degrees
@@ -12,9 +18,7 @@ class Transform3DComponent
 	Vector3 mPosition = Vector3(0, 0, 0);
 	Vector3 mRotation = Vector3(0, 0, 0);
 	Vector3 mScale = Vector3(1.f, 1.f, 1.f);
-
-public:
-	bool wasChanged = true;
+    bool mChanged = true;
 
 public:
 	Transform3DComponent() = default;
@@ -34,7 +38,7 @@ public:
 	void SetPosition(const Vector3& position)
 	{
 		mPosition = position;
-		wasChanged = true;
+		mChanged = true;
 	}
 
 	Vector3 GetRotationDEG() const
@@ -46,7 +50,7 @@ public:
 		mRotation.x = utility::degToRad(rotation_deg.x);
 		mRotation.y = utility::degToRad(rotation_deg.y);
 		mRotation.z = utility::degToRad(rotation_deg.z);
-		wasChanged = true;
+		mChanged = true;
 	}
 	Vector3 GetRotationRAD() const
 	{
@@ -55,7 +59,7 @@ public:
 	void SetRotationRAD(const Vector3& rotation_rad)
 	{
 		mRotation = rotation_rad;
-		wasChanged = true;
+		mChanged = true;
 	}
 
 	Vector3 GetScale() const
@@ -65,8 +69,17 @@ public:
 	void SetScale(const Vector3& scale)
 	{
 		mScale = scale;
-		wasChanged = true;
+		mChanged = true;
 	}
+
+    bool IsChanged() const
+    {
+        return mChanged;
+    }
+    void SetChanged(const bool change)
+    {
+        mChanged = change;
+    }
 
 
 
@@ -107,4 +120,14 @@ public:
 		// return (matRotY * matRotZ * matRotX).GetMat3x3();
 		return Mat4x4::Rotation(mRotation).GetMat3x3();
 	}
+
+    // Based on FPS cameras
+    // Vector3 GetLookDirection() const
+    // {
+    //     Mat4x4 matRotX = Mat4x4::RotationX(-mRotation.y);
+    //     Mat4x4 matRotY = Mat4x4::RotationY(-mRotation.x);
+    //     Mat4x4 matRot = matRotY * matRotX;// * matCameraRotZ;
+    //     return matRot.GetMultiplyVector3(Vector3::FORWARD);
+    // }
+
 };

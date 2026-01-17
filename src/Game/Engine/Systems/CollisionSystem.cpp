@@ -633,7 +633,7 @@ void CollisionSystem::transformColliders()
 	{
 		auto& transform = coordinator.GetComponent<Transform3DComponent>(entity);
 
-		if (transform.wasChanged)
+		if (transform.IsChanged())
 		{
 			// Update world space
 			auto& col = coordinator.GetComponent<ColliderComponent>(entity);

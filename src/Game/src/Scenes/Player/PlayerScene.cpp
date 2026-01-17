@@ -4,6 +4,7 @@
 #include "../../../../ContestAPI/app.h"
 #include "../../../Engine/Components/Transform3DComponent.h"
 #include "../../../Engine/Components/ColliderComponent.h"
+// #include "../../../Engine/Components/CameraComponent.h"
 #include "../../../Engine/Components/RigidbodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
 #include "../../Components/TestComponent.h"
@@ -16,6 +17,7 @@
 void PlayerScene::Enter()
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
 	// THIS IS TEMPORARY JUST FOR TESTING
 	coordinator.RegisterComponent<TestComponent>();
 
@@ -32,18 +34,21 @@ void PlayerScene::Enter()
 	coordinator.AddComponent(mPlayer, TestComponent{});
 	coordinator.AddComponent(
 		mPlayer,
-		Transform3DComponent()
+		Transform3DComponent(
+            Vector3(0, 0, 5.f),
+            Vector3(),
+            Vector3()
+        )
 	);
-	// NEED to adjust camera so it relies on the transform and effects the transform, probably should make a component but maybe not...
-	coordinator.AddComponent(
-			mPlayer, 
-			RigidbodyComponent{}
-	);
+	// coordinator.AddComponent(
+	// 		mPlayer, 
+	// 		RigidbodyComponent{}
+	// );
 	coordinator.AddComponent(
 			mPlayer,
 			ColliderComponent(
 				ColliderType::DYNAMIC,
-				ShapeType::OBB_3D,
+				ShapeType::AABB_3D,
 				[this](Entity self, Entity other, const CollisionManifold& collision) {
 			        this->onCollisionEnter(self, other, collision);
 				},
@@ -58,7 +63,6 @@ void PlayerScene::Enter()
 	coordinator.AddComponent(
 			mPlayer, AudioComponent{}
 	);
-
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
 	audio.AddAudio("Music", "./Data/SFX/ChuckNorris_BG.mp3");
 	audio.AddAudio("Shoot", "./Data/SFX/ak47.mp3");
@@ -68,6 +72,7 @@ void PlayerScene::Enter()
 
 	// Creating the camera instance
 	mCamera = std::make_unique<Camera>();
+    // mCamera->UpdateProjection();
 
 	// Initial prev mouse pos to middle (I think the virtual stuff through it off, ideally there is a way to remove the cursor lol)
 	mPrevMousePos.x = APP_VIRTUAL_WIDTH / 2.f;
@@ -75,14 +80,15 @@ void PlayerScene::Enter()
 	// APP_VIRTUAL_TO_NATIVE_COORDS(mPrevMousePos.x, mPrevMousePos.y)
 
 	// Setting the render camera to the player camera
-	coordinator.GetSystem<Render3DSystem>()->SetRenderCamera(mCamera.get());
-
-
+	coordinator.GetSystem<Render3DSystem>()->SetCamera(mCamera.get());
 }
 
 void PlayerScene::Update(const float deltaTime)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
+
 	Vector2 newMousePos, mouseMovement;
 	App::GetMousePos(newMousePos.x, newMousePos.y);
 	mouseMovement = newMousePos - mPrevMousePos;
@@ -104,23 +110,26 @@ void PlayerScene::Update(const float deltaTime)
 
 
 	// If I wanted to implement something like like a lean in siege thats when you use z "roll"
-	mCamera->rotation.x += mouseMovement.x * _SENS * deltaTime;
-	mCamera->rotation.y += mouseMovement.y * _SENS * deltaTime;
+    Vector3 rotation = transform.GetRotationRAD();
+	rotation.x += mouseMovement.x * _SENS * deltaTime;
+	rotation.y += mouseMovement.y * _SENS * deltaTime;
+    transform.SetRotationRAD(rotation);
+    mCamera->SetTransform(transform);
 
 	if (App::IsKeyPressed(App::KEY_A))
-	    mCamera->MoveLeft(_SPEED * deltaTime);
+        moveLeft(transform, _SPEED * deltaTime);
 	if (App::IsKeyPressed(App::KEY_D))
-	    mCamera->MoveRight(_SPEED * deltaTime);
+        moveRight(transform, _SPEED * deltaTime);
 	if (App::IsKeyPressed(App::KEY_W))
-		mCamera->MoveForward(_SPEED * deltaTime);
+        moveForward(transform, _SPEED * deltaTime);
 	if (App::IsKeyPressed(App::KEY_S))
-		mCamera->MoveBackward(_SPEED * deltaTime);
+        moveBackward(transform, _SPEED * deltaTime);
 
 	// For testing with flying
 	if (App::IsKeyPressed(App::KEY_SPACE) || App::IsKeyPressed(App::KEY_E))
-		mCamera->position.y -= _SPEED * deltaTime;
+        moveUp(transform, _SPEED * deltaTime);
 	if (App::IsKeyPressed(App::KEY_Q))
-		mCamera->position.y += _SPEED * deltaTime;
+        moveDown(transform, _SPEED * deltaTime);
 
 	// Sound test
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
@@ -128,11 +137,10 @@ void PlayerScene::Update(const float deltaTime)
 		audio.Restart("Shoot");
 
 
-	// Updating the transform
-	// TODO: actually check if it was changed
-	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
-	transform.SetPosition(mCamera->position);
-	transform.SetRotationRAD(mCamera->rotation);
+    // Updating the Camera
+    mCamera->SetTransform(transform);
+    mCamera->UpdateView();
+	// coordinator.GetSystem<Render3DSystem>()->UpdateCamera(camera, transform);
 }
 
 
@@ -164,4 +172,47 @@ void PlayerScene::onCollisionExit(Entity self, Entity other)
 {
 	utility::log("Exit");
 	mIsColliding = false;
+}
+
+
+void PlayerScene::moveLeft(Transform3DComponent& transform, const float speed)
+{
+    // The cross of the direction facing and the world DOWN should be the right dir relative to the facing dir
+    Vector3 local_left = mCamera->GetLookDirection().GetCrossProduct(Vector3::DOWN);
+    transform.SetPosition(transform.GetPosition() + (local_left * speed));
+
+}
+
+
+void PlayerScene::moveRight(Transform3DComponent& transform, const float speed)
+{
+    // The cross of the direction facing and the world UP should be the right dir relative to the facing dir
+    Vector3 local_right = mCamera->GetLookDirection().GetCrossProduct(Vector3::UP);
+    transform.SetPosition(transform.GetPosition() + (local_right * speed));
+}
+
+
+void PlayerScene::moveForward(Transform3DComponent& transform, const float speed)
+{
+    transform.SetPosition(transform.GetPosition() + mCamera->GetLookDirection() * speed);
+}
+void PlayerScene::moveBackward(Transform3DComponent& transform, const float speed)
+{
+    transform.SetPosition(transform.GetPosition() - mCamera->GetLookDirection() * speed);
+}
+
+
+void PlayerScene::moveDown(Transform3DComponent& transform, const float speed)
+{
+    Vector3 pos = transform.GetPosition();
+    pos.y += speed;
+    transform.SetPosition(pos);
+}
+
+
+void PlayerScene::moveUp(Transform3DComponent& transform, const float speed)
+{
+    Vector3 pos = transform.GetPosition();
+    pos.y -= speed;
+    transform.SetPosition(pos);
 }

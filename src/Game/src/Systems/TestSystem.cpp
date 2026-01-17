@@ -3,5 +3,5 @@
 
 void TestSystem::Update(float deltaTime)
 {
-    utility::log("test");
+    // utility::log("test");
 }

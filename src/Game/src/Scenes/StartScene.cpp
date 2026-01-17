@@ -24,9 +24,9 @@ void StartScene::Enter()
     coordinator.AddComponent(
     	mCube,
     	Transform3DComponent(
-	    Vector3(0, 0, 10.f),
-	    Vector3(0, 0, 45.f),
-	    Vector3(1.f, 1.f, 1.f)
+            Vector3(0, 0, 10.f),
+            Vector3(0, 0, 0.f),
+            Vector3(1.f, 1.f, 1.f)
     	)
     );
     coordinator.AddComponent(
@@ -38,8 +38,8 @@ void StartScene::Enter()
     coordinator.AddComponent(
 	    mCube,
 	    ColliderComponent(
-		ColliderType::DYNAMIC,
-		ShapeType::OBB_3D
+            ColliderType::DYNAMIC,
+            ShapeType::AABB_3D
 	    )
     );
 
@@ -52,9 +52,9 @@ void StartScene::Enter()
     coordinator.AddComponent(
     	mSphere,
     	Transform3DComponent(
-	    Vector3(0.5f, 5.f, 10.f),
-	    Vector3(0, 0, 0),
-	    Vector3(1.f, 1.f, 1.f)
+            Vector3(0.5f, 5.f, 10.f),
+            Vector3(0, 0, 0),
+            Vector3(1.f, 1.f, 1.f)
     	)
     );
     coordinator.AddComponent(
@@ -64,8 +64,8 @@ void StartScene::Enter()
     coordinator.AddComponent(
 	    mSphere,
 	    ColliderComponent(
-		ColliderType::DYNAMIC,
-		ShapeType::SPHERE_3D
+            ColliderType::DYNAMIC,
+            ShapeType::SPHERE_3D
 	    )
     );
 
@@ -110,15 +110,15 @@ void StartScene::Enter()
     coordinator.AddComponent(
 	    mFloor,
 	    RigidbodyComponent{
-		.isStatic = true,
-		.mass = 0.f 
+            .isStatic = true,
+            .mass = 0.f 
 	    }
     );
     coordinator.AddComponent(
 	    mFloor,
 	    ColliderComponent(
-		ColliderType::STATIC,
-		ShapeType::AABB_3D
+            ColliderType::STATIC,
+            ShapeType::OBB_3D
 	    )
     );
 

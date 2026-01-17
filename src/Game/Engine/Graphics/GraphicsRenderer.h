@@ -5,7 +5,6 @@
 #include "../Math/Vector2.h"
 #include "../Math/Mat4x4.h"
 #include "../Math/Triangle.h"
-#include "../Camera/Camera.h"
 #include <vector>
 
 // This website helps understand the math going on https://www.codinglabs.net/article_world_view_projection_matrix.aspx
@@ -13,6 +12,9 @@
 class GraphicsRenderer
 {
 public:
+    GraphicsRenderer() = default;
+    GraphicsRenderer(const Vector3& cam_position,const Mat4x4& cam_projection, const Mat4x4& cam_view);
+
 	struct RenderTriangle
 	{
 		Triangle triangle;
@@ -29,18 +31,20 @@ public:
 	void DrawMesh(const Mesh& mesh, const Mat4x4& matWorld);
 	void ClearRenderer();
 
-	void SetProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar);
-	void SetCamera(Camera* camera);
+    void SetProjectionMatrix(const Mat4x4& projection);
+    Mat4x4 GetProjectionMatrix() const;
+    void SetViewMatrix(const Mat4x4& view);
+    Mat4x4 GetViewMatrix() const;
+    void SetCameraPosition(const Vector3& position);
+    Vector3 GetCameraPosition() const;
 
 private:
 	Vector3 VectorIntersectPlane(Vector3& plane_p, Vector3& plane_n, Vector3& lineStart, Vector3& lineEnd);
 	int ClipTriangleAgainstPlane(Vector3 plane_p, Vector3 plane_n, Triangle& in_tri, Triangle& out_tri1, Triangle& out_tri2);
 
 private:
-
 	std::vector<RenderTriangle> mTrisToRender;
 	Mat4x4 mMatProj = Mat4x4::Identity();
-	Mat4x4 mMatWorld = Mat4x4::Identity();
-
-	Camera* mCamera = nullptr;
+	Mat4x4 mMatView = Mat4x4::Identity();
+    Vector3 mCameraPos = Vector3(0, 0, 0);
 };

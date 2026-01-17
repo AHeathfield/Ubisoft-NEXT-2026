@@ -286,7 +286,7 @@ public:
     void RegisterComponent()
     {
         const char* typeName = typeid(T).name();
-        utility::log(typeName);
+        // utility::log(typeName);
 
         assert(mComponentTypes.find(typeName) == mComponentTypes.end() && "Registering component type more than once.");
 
@@ -304,7 +304,7 @@ public:
     ComponentType GetComponentType()
     {
         const char* typeName = typeid(T).name();
-        utility::log(typeName);
+        // utility::log(typeName);
 
         assert(mComponentTypes.find(typeName) != mComponentTypes.end() && "Component not registered before use.");
 
@@ -496,7 +496,7 @@ public:
             else
             {
                 system->OnEntityRemoved(entity);
-                utility::log("SIG CHANGE REMOVED");
+                // utility::log("SIG CHANGE REMOVED");
                 system->mEntities.erase(entity);
             }
         }

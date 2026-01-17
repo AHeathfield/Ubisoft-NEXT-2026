@@ -9,6 +9,6 @@ void Transform3DSystem::Update(float deltaTime)
 	for (const auto& entity : mEntities)
 	{
 		auto& transform = coordinator.GetComponent<Transform3DComponent>(entity);
-		transform.wasChanged = false;
+		transform.SetChanged(false);
 	}
 }

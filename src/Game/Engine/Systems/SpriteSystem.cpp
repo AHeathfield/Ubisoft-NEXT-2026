@@ -37,7 +37,7 @@ void SpriteSystem::Update(float deltaTime)
 
 		// Updating transform
 		const auto& transform = coordinator.GetComponent<Transform2DComponent>(entity);
-		if (transform.wasChanged)
+		if (transform.IsChanged())
 		{
 			// Just using the x since API only handles uniform scaling
 			sprite_comp.sprite->SetScale(transform.GetScale().x);
