@@ -171,6 +171,9 @@ void StartScene::Enter()
 void StartScene::Update(float deltaTime)
 {
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    // const auto& transform = coordinator.GetComponent<Transform3DComponent>(mCube);
+    // utility::log(transform.GetPosition().GetString());
     auto& transformTest = coordinator.GetComponent<Transform3DComponent>(mZombie);
     transformTest.SetPosition(transformTest.GetPosition() + Vector3(0, 0.1f, 0));
 

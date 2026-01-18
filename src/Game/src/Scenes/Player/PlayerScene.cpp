@@ -37,13 +37,15 @@ void PlayerScene::Enter()
 		Transform3DComponent(
             Vector3(0, 0, 5.f),
             Vector3(),
-            Vector3()
+            Vector3(1.f, 1.f, 1.f)
         )
 	);
-	// coordinator.AddComponent(
-	// 		mPlayer, 
-	// 		RigidbodyComponent{}
-	// );
+	coordinator.AddComponent(
+			mPlayer, 
+			RigidbodyComponent{
+	               .mass = 3.f
+	           }
+	);
 	coordinator.AddComponent(
 			mPlayer,
 			ColliderComponent(
@@ -138,6 +140,7 @@ void PlayerScene::Update(const float deltaTime)
 
 
     // Updating the Camera
+    // utility::log(transform.GetPosition().GetString());
     mCamera->SetTransform(transform);
     mCamera->UpdateView();
 	// coordinator.GetSystem<Render3DSystem>()->UpdateCamera(camera, transform);

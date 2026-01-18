@@ -45,7 +45,9 @@ void RigidbodySystem::Update(float deltaTime)
 	for (const auto& entity : mEntities)
 	{
 		auto& rigidbody = coordinator.GetComponent<RigidbodyComponent>(entity);
-		applyForces(rigidbody);
+
+        if (rigidbody.isAwake)
+            applyForces(rigidbody);
 	}
 
 	// Applying impulses to objects that are colliding
@@ -61,10 +63,72 @@ void RigidbodySystem::Update(float deltaTime)
 		}
 	}
 
+    // Performing Linear Projection to fix any sinking issues that might occur
+	int size = mImpulses.size();
+	for (int i = 0; i < size; i++)
+	{
+		ImpulseData impData = mImpulses[i];
+		auto& rbA = coordinator.GetComponent<RigidbodyComponent>(impData.entA);
+		auto& rbB = coordinator.GetComponent<RigidbodyComponent>(impData.entB);
+
+		float invMassA = rbA.GetInvMass();
+		float invMassB = rbB.GetInvMass();
+		float totalMass = invMassA + invMassB;
+
+		if (CMP_FLOAT(totalMass, 0.f))
+			continue; // Infinite mass
+
+		// Correction amount is based on penetration depth, slack, and amount of linear projection
+		float depth = std::fmaxf(impData.collision.depth - mPenetrationSlack, 0.f);
+		float scalar;
+		scalar = depth / totalMass;
+
+		Vector3 correction = impData.collision.normal * scalar * mLinearProjectionPercent;
+
+		// Applying correction to position of both rbs
+		if (rbA.isStatic == false)
+		{
+			auto& transformA = coordinator.GetComponent<Transform3DComponent>(impData.entA);
+            Vector3 oldPos = transformA.GetPosition();
+			transformA.SetPosition(transformA.GetPosition() - (correction * invMassA));
+
+            // // Adjust velocity to match position change
+            Vector3 posDelta = transformA.GetPosition() - oldPos;
+            rbA.velocity += posDelta * deltaTime;
+		}
+		if (rbB.isStatic == false)
+		{
+			auto& transformB = coordinator.GetComponent<Transform3DComponent>(impData.entB);
+            Vector3 oldPos = transformB.GetPosition();
+			transformB.SetPosition(transformB.GetPosition() + (correction * invMassB));
+
+            // // Adjust velocity to match position change
+            Vector3 posDelta = transformB.GetPosition() - oldPos;
+            rbB.velocity += posDelta * deltaTime;
+		}
+
+		// Solving constraints would go here but I don't have any constraints
+	}
+
+
 	// Integrate position and velocity of every rigidbody
 	for (const auto& entity : mEntities)
 	{
 		auto& rigidbody = coordinator.GetComponent<RigidbodyComponent>(entity);
+
+        if (!rigidbody.isAwake)
+        {
+            rigidbody.sleepTimer.Increment(deltaTime);
+            if (rigidbody.sleepTimer.IsFinished())
+            {
+                rigidbody.isAwake = true;
+                rigidbody.awakeTimer.Reset();
+            }
+        }
+        else
+        {
+            rigidbody.awakeTimer.Increment(deltaTime);
+        }
 
 		if (rigidbody.isStatic)
 			continue;
@@ -112,47 +176,23 @@ void RigidbodySystem::Update(float deltaTime)
 				// Integrate angular velocity into orientation
 				transform.SetRotationRAD(transform.GetRotationRAD() + rigidbody.angularVelocity * deltaTime);
 			}
+
+
+            // If velocities below threshold, awake timer is done, and its colliding, then we can put to sleep
+            if (shouldSleep(rigidbody) && rigidbody.awakeTimer.IsFinished() && utility::containsValue(mCollisions, entity))
+            {
+                rigidbody.sleepTimer.Reset();
+                rigidbody.isAwake = false;
+                rigidbody.velocity = Vector3(0, 0, 0);
+                rigidbody.angularVelocity = Vector3(0, 0, 0);
+                rigidbody.forces = Vector3(0, 0, 0);
+            }
 		}
 	}
 
-	// Performing Linear Projection to fix any sinking issues that might occur
-	int size = mImpulses.size();
-	for (int i = 0; i < size; i++)
-	{
-		ImpulseData impData = mImpulses[i];
-		auto& rbA = coordinator.GetComponent<RigidbodyComponent>(impData.entA);
-		auto& rbB = coordinator.GetComponent<RigidbodyComponent>(impData.entB);
-
-		float invMassA = rbA.GetInvMass();
-		float invMassB = rbB.GetInvMass();
-		float totalMass = invMassA + invMassB;
-
-		if (CMP_FLOAT(totalMass, 0.f))
-			continue; // Infinite mass
-
-		// Correction amount is based on penetration depth, slack, and amount of linear projection
-		float depth = std::fmaxf(impData.collision.depth - mPenetrationSlack, 0.f);
-		float scalar;
-		scalar = depth / totalMass;
-
-		Vector3 correction = impData.collision.normal * scalar * mLinearProjectionPercent;
-
-		// Applying correction to position of both rbs
-		if (rbA.isStatic == false)
-		{
-			auto& transformA = coordinator.GetComponent<Transform3DComponent>(impData.entA);
-			transformA.SetPosition(transformA.GetPosition() - (correction * invMassA));
-		}
-		if (rbB.isStatic == false)
-		{
-			auto& transformB = coordinator.GetComponent<Transform3DComponent>(impData.entB);
-			transformB.SetPosition(transformB.GetPosition() + (correction * invMassB));
-		}
-
-		// Solving constraints would go here but I don't have any constraints
-	}
-
+	
 	mImpulses.clear();
+    mCollisions.clear();
 }
 
 Vector3 RigidbodySystem::GetGravity() const
@@ -193,6 +233,19 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	auto& transformA = coordinator.GetComponent<Transform3DComponent>(impData.entA);
 	auto& transformB = coordinator.GetComponent<Transform3DComponent>(impData.entB);
 	bool hasCollider = coordinator.HasComponent<ColliderComponent>(impData.entA) && coordinator.HasComponent<ColliderComponent>(impData.entB);
+
+    // If there was an impulse, awake sleeping entity
+    // if (!rbA.isAwake)
+    // {
+    //     rbA.isAwake = true;
+    //     rbA.sleepTimer.Reset();
+    // }
+    // if (!rbB.isAwake)
+    // {
+    //     rbB.isAwake = true;
+    //     rbB.sleepTimer.Reset();
+    // }
+
 
 	// Linear velocity
 	float invMass1 = rbA.GetInvMass();
@@ -271,6 +324,8 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	{
 		rbA.velocity = rbA.velocity - (impulse * invMass1);
 		rbA.angularVelocity = rbA.angularVelocity - i1.GetMultiplyVector3(r1.GetCrossProduct(impulse));
+
+
 	}
 	if (!rbB.isStatic)
 	{
@@ -328,12 +383,24 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	{
 		rbA.velocity = rbA.velocity - (tangentImpulse * invMass1);
 		rbA.angularVelocity = rbA.angularVelocity - i1.GetMultiplyVector3(r1.GetCrossProduct(tangentImpulse));
+
+        if (!shouldSleep(rbA))
+        {
+            rbA.isAwake = true;
+            rbA.awakeTimer.Reset();
+        }
 	}
 
 	if (!rbB.isStatic)
 	{
 		rbB.velocity = rbB.velocity + (tangentImpulse * invMass2);
 		rbB.angularVelocity = rbB.angularVelocity + i2.GetMultiplyVector3(r2.GetCrossProduct(tangentImpulse));
+
+        if (!shouldSleep(rbB))
+        {
+            rbB.isAwake = true;
+            rbB.awakeTimer.Reset();
+        }
 	}
 }
 
@@ -370,10 +437,18 @@ void RigidbodySystem::physicsResponse(Entity self, Entity other, const Collision
 		{
 			// utility::log(std::to_string(collision.depth));
 			mImpulses.push_back(ImpulseData{self, other, collision});
+            mCollisions.insert(self);
+            mCollisions.insert(other);
 		}
 		else
 		{
 			utility::log("False alarm!");
 		}
 	}
+}
+
+
+bool RigidbodySystem::shouldSleep(RigidbodyComponent& rb) const
+{
+    return (rb.velocity.GetMagnitudeSquared() < rb.sleepVelocityThreshold*rb.sleepVelocityThreshold && rb.angularVelocity.GetMagnitudeSquared() < rb.sleepAngularVelocityThreshold*rb.sleepAngularVelocityThreshold);// && rb.sleepTimer.IsFinished())
 }

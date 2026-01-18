@@ -4,6 +4,7 @@
 #include "../Math/Vector3.h"
 #include "../Components/RigidbodyComponent.h"
 #include "../Physics/CollisionManifold.h"
+#include <unordered_set>
 
 // Handles rigid bodies
 // This system uses linear projection but more modern engines use an iterative physics solver, see https://www.gdcvault.com/play/1020603/Physics-for-Game-Programmers-Understanding
@@ -36,9 +37,14 @@ private:
     // This is the ApplyImpulse from TB pre much
     void physicsResponse(Entity self, Entity other, const CollisionManifold& collision);
 
+    bool shouldSleep(RigidbodyComponent& rb) const;
+
 
 private:
     std::vector<ImpulseData> mImpulses;
+    std::unordered_set<Entity> mCollisions;
+    
+    // float mRestVelocity = 1.0f;
 
     Vector3 mGravity = Vector3(0, 9.82f, 0); // + y is down ;)
     float mDamping = 0.98f; // Mainly used to simulate air friction
