@@ -407,6 +407,7 @@ void CollisionSystem::OnEntityRemoved(Entity entity)
 				break;
 		}
 	}
+
 }
 
 

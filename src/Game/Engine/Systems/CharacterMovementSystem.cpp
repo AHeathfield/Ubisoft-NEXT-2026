@@ -287,7 +287,7 @@ void CharacterMovementSystem::snapToFloor(const Vector3& original_pos, Vector3& 
 
     float snapLength = character.floorSnapDistance;
     float fallDistance = -character.velocity.GetDotProduct(up) * deltaTime;
-    utility::log(std::to_string(fallDistance));
+    // utility::log(std::to_string(fallDistance));
     snapLength += std::max(0.0f, fallDistance);
 
     std::unordered_set<Entity> ents_to_check = collisionSystem->QueryStaticRay(ray, snapLength);

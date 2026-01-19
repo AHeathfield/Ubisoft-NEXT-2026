@@ -41,6 +41,8 @@ private:
 
 
 private:
+
+    std::unordered_set<Entity> mDeleted;
     std::vector<ImpulseData> mImpulses;
     std::unordered_set<Entity> mCollisions;
     

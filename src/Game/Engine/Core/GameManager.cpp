@@ -7,11 +7,13 @@
 #include "../Components/Transform3DComponent.h"
 #include "../Components/Transform2DComponent.h"
 #include "../Components/ColliderComponent.h"
+#include "../Components/TimerComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Components/AudioComponent.h"
 #include "../Components/CharacterBodyComponent.h"
 #include "../Components/RigidBodyComponent.h"
 #include "../Systems/Render3DSystem.h"
+#include "../Systems/TimerSystem.h"
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/CharacterMovementSystem.h"
 // #include "../Systems/CharacterSnapSystem.h"
@@ -36,6 +38,7 @@ GameManager& GameManager::Instance()
 
 void GameManager::Start()
 {
+    mCoordinator.RegisterComponent<TimerComponent>();
     mCoordinator.RegisterComponent<MeshComponent>();
     mCoordinator.RegisterComponent<SpriteComponent>();
     mCoordinator.RegisterComponent<AudioComponent>();
@@ -391,21 +394,23 @@ void GameManager::setUpSystems()
         mCoordinator.SetSystemSignature<Transform3DSystem>(signature);
     }
 
+    // Timer System
+    auto timerSystem = mCoordinator.RegisterSystem<TimerSystem>();
+    {
+        Signature signature;
+        signature.set(mCoordinator.GetComponentType<TimerComponent>());
+        mCoordinator.SetSystemSignature<TimerSystem>(signature);
+    }
+
     // Setting order they are called in
     mSystemsStack.push_back(transform2DSystem);
     mSystemsStack.push_back(transform3DSystem);
     mSystemsStack.push_back(spriteSystem);
     mSystemsStack.push_back(render3DSystem);
-    // mSystemsStack.push_back(characterSnapSystem);
     mSystemsStack.push_back(collisionSystem);
     mSystemsStack.push_back(characterMovementSystem);
     mSystemsStack.push_back(rigidBodySystem);
-    // mSystemsStackOrder[1] = "RigidBodySystem";
-    // mSystemsStackOrder[2] = "CollisionSystem";
-    // mSystemsStackOrder[3] = "Render3DSystem";
-    // mSystemsStackOrder[4] = "SpriteSystem";
-    // mSystemsStackOrder[5] = "Transform3DSystem";
-    // mSystemsStackOrder[6] = "Transform2DSystem";
+    mSystemsStack.push_back(timerSystem);
 
     initSystems();
 }

@@ -4,8 +4,10 @@
 #include "../../../../ContestAPI/app.h"
 #include "../../../Engine/Components/Transform3DComponent.h"
 #include "../../../Engine/Components/ColliderComponent.h"
+#include "../../../Engine/Components/TimerComponent.h"
+#include "../../../Engine/Components/MeshComponent.h"
 // #include "../../../Engine/Components/CameraComponent.h"
-// #include "../../../Engine/Components/RigidBodyComponent.h"
+#include "../../../Engine/Components/RigidBodyComponent.h"
 #include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
 #include "../../Components/TestComponent.h"
@@ -23,7 +25,7 @@ void PlayerScene::Enter()
 	coordinator.RegisterComponent<TestComponent>();
 
 	auto testSystem = coordinator.RegisterSystem<TestSystem>();
-	{
+{
 		Signature signature;
 		signature.set(coordinator.GetComponentType<TestComponent>());
 		coordinator.SetSystemSignature<TestSystem>(signature);
@@ -36,7 +38,7 @@ void PlayerScene::Enter()
 	coordinator.AddComponent(
 		mPlayer,
 		Transform3DComponent(
-            Vector3(0, 0, 5.f),
+            Vector3(0, 5.f, 5.f),
             Vector3(),
             Vector3(1.f, 1.f, 1.f)
         )
@@ -162,7 +164,10 @@ void PlayerScene::Update(const float deltaTime)
 	// Sound test
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
 	if (App::IsMousePressed(GLUT_LEFT_BUTTON))
+    {
 		audio.Restart("Shoot");
+        throwBall();
+    }
 
 
     // Updating the Camera
@@ -267,3 +272,63 @@ void PlayerScene::moveUp(Transform3DComponent& transform, const float speed)
     pos.y -= speed;
     transform.SetPosition(pos);
 }
+
+
+void PlayerScene::throwBall()
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    const auto& playerTransform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
+
+    Entity ball = CreateEntity();
+    coordinator.AddComponent(
+    	ball,
+    	MeshComponent("./data/Objects/sphere.obj", Color(0, 255, 0))
+    );
+    coordinator.AddComponent(
+    	ball,
+    	Transform3DComponent(
+            playerTransform.GetPosition(),
+            Vector3(0, 0, 0),
+            Vector3(0.5f, 0.5f, 0.5f)
+    	)
+    );
+    coordinator.AddComponent(
+	    ball,
+	    RigidBodyComponent{}
+    );
+    coordinator.AddComponent(
+	    ball,
+	    TimerComponent{
+            .timer = Timer(false, 1.f),
+            .isLooping = false,
+            .onTimerEnd = [this](Entity self) {
+                    this->deleteBall(self);
+				}
+        }
+    );
+    coordinator.AddComponent(
+	    ball,
+	    ColliderComponent(
+            ColliderType::DYNAMIC,
+            ShapeType::SPHERE_3D
+	    )
+    );
+
+    auto& rb = coordinator.GetComponent<RigidBodyComponent>(ball);
+    auto& tc = coordinator.GetComponent<TimerComponent>(ball);
+
+    // Just ensuring the timer gets resetted
+    // tc.timer = Timer(false, 1.f);
+    // tc.onTimerEnd = [this](Entity self) {
+    //     this->deleteBall(self);
+    // };
+
+    rb.velocity = mCamera->GetLookDirection().GetNormal() * _THROW_STRENGTH;
+}
+
+
+void PlayerScene::deleteBall(Entity self)
+{
+    GameManager::Instance().GetCoordinator().DestroyEntity(self);
+}
+

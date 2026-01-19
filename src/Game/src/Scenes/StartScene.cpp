@@ -104,7 +104,7 @@ void StartScene::Enter()
     	Transform3DComponent(
 	    Vector3(0.f, 10.f, 10.f),
 	    Vector3(0, 0, 0),
-	    Vector3(10.f, 1.f, 10.f)
+	    Vector3(50.f, 1.f, 50.f)
     	)
     );
     coordinator.AddComponent(

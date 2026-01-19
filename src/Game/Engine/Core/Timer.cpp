@@ -1,17 +1,22 @@
 #include "Timer.h"
+#include <algorithm>
 
 Timer::Timer(const bool start_paused, const float max)
-    : mPaused(start_paused)
+    : mSecondsPassed(0.f),
+    mPaused(start_paused),
+    mFinished(false)
 {
     SetMax(max);
 }
 
 void Timer::SetMax(const float max)
 {
-    if (max < 0.f)
-        mMax = 0.f;
-    else
-        mMax = max;
+    // if (max < 0.f)
+    //     mMax = 0.f;
+    // else
+    //     mMax = max;
+    mMax = std::max(0.f, max);
+    mFinished = false;
 }
 
 void Timer::Increment(const float deltaTime)
@@ -21,7 +26,7 @@ void Timer::Increment(const float deltaTime)
 
     mSecondsPassed += deltaTime;
 
-    if (mSecondsPassed > mMax)
+    if (mSecondsPassed >= mMax)
     {
         mSecondsPassed = mMax;
         mFinished = true;

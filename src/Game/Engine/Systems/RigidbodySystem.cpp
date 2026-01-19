@@ -29,6 +29,8 @@ void RigidBodySystem::OnEntityAdded(Entity entity)
 // If has collider, remove the physics response
 void RigidBodySystem::OnEntityRemoved(Entity entity)
 {
+    mCollisions.erase(entity);
+    mDeleted.insert(entity);
 	// Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	// if (coordinator.HasComponent<ColliderComponent>(entity))
 	// {
@@ -69,6 +71,12 @@ void RigidBodySystem::Update(float deltaTime)
 	for (int i = 0; i < size; i++)
 	{
 		ImpulseData impData = mImpulses[i];
+
+        if (utility::containsValue(mDeleted, impData.entA) || utility::containsValue(mDeleted, impData.entB))
+        {
+            continue;
+        }
+
 		auto& rbA = coordinator.GetComponent<RigidBodyComponent>(impData.entA);
 		auto& rbB = coordinator.GetComponent<RigidBodyComponent>(impData.entB);
 
@@ -111,6 +119,7 @@ void RigidBodySystem::Update(float deltaTime)
 		// Solving constraints would go here but I don't have any constraints
 	}
 
+    // utility::log("rb works");
 
 	// Integrate position and velocity of every rigidbody
 	for (const auto& entity : mEntities)
@@ -193,6 +202,7 @@ void RigidBodySystem::Update(float deltaTime)
 
 	mImpulses.clear();
     mCollisions.clear();
+    mDeleted.clear();
 }
 
 Vector3 RigidBodySystem::GetGravity() const
@@ -227,6 +237,11 @@ void RigidBodySystem::applyForces(RigidBodyComponent& rb)
 void RigidBodySystem::applyImpulse(const ImpulseData& impData, int c)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    if (utility::containsValue(mDeleted, impData.entA) || utility::containsValue(mDeleted, impData.entB))
+    {
+        return;
+    }
 
 	auto& rbA = coordinator.GetComponent<RigidBodyComponent>(impData.entA);
 	auto& rbB = coordinator.GetComponent<RigidBodyComponent>(impData.entB);

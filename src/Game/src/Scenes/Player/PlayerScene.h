@@ -31,12 +31,17 @@ private:
     void moveDown(Transform3DComponent& transform, const float speed);
     void moveUp(Transform3DComponent& transform, const float speed);
 
+    // Attacks
+    void throwBall();
+    void deleteBall(Entity self);
+
 private:
     static constexpr float _SPEED = 8.0f;
-    static constexpr float _JUMP = 200.f;
-    static constexpr float _GRAVITY = 10.f;
+    static constexpr float _JUMP = 150.f;
+    static constexpr float _GRAVITY = 15.f;
     static constexpr float _SENS = 0.2f;
     static constexpr float _EPS = 0.00000001f;
+    static constexpr float _THROW_STRENGTH = 20.f;
 
 private:
     Entity mPlayer = -1;
