@@ -4,6 +4,7 @@
 #include "../Components/ColliderComponent.h"
 #include "../Components/CharacterBodyComponent.h"
 #include "../Components/RigidBodyComponent.h"
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -35,9 +36,15 @@ void CharacterMovementSystem::Update(float deltaTime)
         Ray3 ray;
         RaycastResult outResult, testResult;
 
+        // TESTING
+        // position += remainingMove;
+
         // Slides
         for (int i = 0; i < character.maxSlides; i++)
         {
+            if (remainingMove.GetMagnitudeSquared() < _EPS)
+                break;
+
             outResult.Reset();
             outResult.t = FLT_MAX;
             ray = Ray3(position, remainingMove.GetNormal());
@@ -46,6 +53,9 @@ void CharacterMovementSystem::Update(float deltaTime)
             // Getting the closest raycast result
             for (const auto& entityB : ents_to_check)
             {
+                if (entity == entityB)
+                    continue;
+
                 if (!coordinator.HasComponent<RigidBodyComponent>(entityB))
                     continue;
 
@@ -72,6 +82,12 @@ void CharacterMovementSystem::Update(float deltaTime)
             {
                 position += remainingMove;
                 break;
+            }
+
+            // If they just jumped and its a floor collision, ignore it
+            if (character.justJumped && outResult.normal.GetDotProduct(character.upDirection) > character.floorThreshold)
+            {
+                continue;
             }
 
             // Ensuring normal opposes dir
@@ -111,71 +127,213 @@ void CharacterMovementSystem::Update(float deltaTime)
             }
         }
 
-        transform.SetPosition(position);
+
+
+
+
+
+
+
+        // transform.SetPosition(position);
 
 
         // Snapping to floor
-        Vector3 up = character.upDirection.GetNormal();
+        // if (!character.justJumped)
+        // {
+        //     Vector3 up = character.upDirection.GetNormal();
+        //     // ray = Ray3(transform.GetPosition(), up * -1.f);
+        //     // ray = Ray3(position, up * -1.f);
+        //     float testHeight = 2.f;
+        //     ray = Ray3(position - up * testHeight, up * -1.f);
+        //
+        //     std::unordered_set<Entity> ents_to_check = collisionSystem->QueryStaticRay(ray, character.floorSnapDistance);
+        //
+        //     RaycastResult closestResult;
+        //     closestResult.t = FLT_MAX;
+        //
+        //     // We got to find the closest floor if any
+        //     for (const auto& entityB : ents_to_check)
+        //     {
+        //         testResult.Reset();
+        //         if (!coordinator.HasComponent<RigidBodyComponent>(entityB))
+        //             continue;
+        //
+        //         const auto& rb = coordinator.GetComponent<RigidBodyComponent>(entityB);
+        //
+        //         // For now its only static bodies, although I may want to change this for things like moving platforms
+        //         // in the future.
+        //         if (!rb.isStatic)
+        //             continue;
+        //
+        //         const auto& collB = coordinator.GetComponent<ColliderComponent>(entityB);
+        //         const auto& transformB = coordinator.GetComponent<Transform3DComponent>(entityB);
+        //         Transform3DComponent expandedTransformB = transformB;
+        //         expandedTransformB.SetScale(transformB.GetScale() + transform.GetScale());
+        //         ColliderComponent expandedCollB = collB;
+        //         expandedCollB.UpdateWorldSpace(expandedTransformB);
+        //
+        //
+        //         collisionSystem->RaycastCollider(ray, testResult, collB);
+        //         // collisionSystem->RaycastCollider(ray, testResult, expandedCollB);
+        //
+        //         // If collision and is a floor
+        //         if (testResult.hit && testResult.normal.GetDotProduct(up) > character.floorThreshold)
+        //         {
+        //             if (testResult.t < closestResult.t)
+        //                 closestResult = testResult;
+        //         }
+        //     }
+        //
+        //
+        //     // Snap to floor
+        //     if (closestResult.hit)
+        //     {
+        //         character.isOnFloor = true;
+        //
+        //         // float desired = character.floorSnapDistance;
+        //         // float correction = desired - closestResult.t;
+        //         //
+        //         // correction = std::clamp(
+        //         //     correction,
+        //         //     -character.floorSnapDistance,
+        //         //      character.floorSnapDistance
+        //         // );
+        //
+        //         position += up * closestResult.t;
+        //         // position += up * transform.GetScale() * character.floorSnapDistance;
+        //
+        //     }
+        //
+        //     // Removing velocity into surface
+        //     if (character.isOnFloor)
+        //     {
+        //         // Removing velocity into the ground
+        //         float vDot = character.velocity.GetDotProduct(up);
+        //         if (vDot < 0)
+        //         {
+        //             character.velocity -= up * vDot;
+        //             utility::log(character.velocity.GetString());
+        //         }
+        //     }
+        // }
+        // else
+        // {
+        //     character.justJumped = false;
+        // }
 
-        ray = Ray3(transform.GetPosition(), up * -1.f);
+        // if (character.isOnFloor)
+        // {
+        //     // position += character.upDirection * character.floorSnapDistance;
+        // }
+        //
 
-        std::unordered_set<Entity> ents_to_check = collisionSystem->QueryStaticRay(ray, character.floorSnapDistance);
+        // TODO: fix the slight floor sink... happens because the raycast is too small and the snap method won't work
+        snapToFloor(transform.GetPosition(), position, transform.GetScale(), character, entity, deltaTime);
 
-        RaycastResult closestResult;
-        closestResult.t = FLT_MAX;
-
-        // We got to find the closest floor if any
-        for (const auto& entityB : ents_to_check)
-        {
-            testResult.Reset();
-            if (!coordinator.HasComponent<RigidBodyComponent>(entityB))
-                continue;
-
-            const auto& rb = coordinator.GetComponent<RigidBodyComponent>(entityB);
-
-            // For now its only static bodies, although I may want to change this for things like moving platforms
-            // in the future.
-            if (!rb.isStatic)
-                continue;
-
-            const auto& collB = coordinator.GetComponent<ColliderComponent>(entityB);
-            const auto& transformB = coordinator.GetComponent<Transform3DComponent>(entityB);
-            Transform3DComponent expandedTransformB = transformB;
-            expandedTransformB.SetScale(transformB.GetScale() + transform.GetScale());
-            ColliderComponent expandedCollB = collB;
-            expandedCollB.UpdateWorldSpace(expandedTransformB);
-
-
-            collisionSystem->RaycastCollider(ray, testResult, collB);
-
-            // If collision and is a floor
-            if (testResult.hit && testResult.normal.GetDotProduct(up) > character.floorThreshold)
-            {
-                if (testResult.t < closestResult.t)
-                    closestResult = testResult;
-            }
-        }
-
-
-        // Snap to floor
-        if (closestResult.hit)
-        {
-            // utility::log("Closest t: " + std::to_string(closestResult.t));
-            character.isOnFloor = true;
-            // transform.Translate((up * -1) * closestResult.t);
-            transform.Translate((up) * closestResult.t);
-
-        }
-
-        // Removing velocity into surface
         if (character.isOnFloor)
         {
-            // Removing velocity into the ground
-            float vDot = character.velocity.GetDotProduct(up);
+            // Kill downward velocity
+            float vDot = character.velocity.GetDotProduct(character.upDirection);
             if (vDot < 0)
-            {
-                character.velocity -= up * vDot;
-            }
+                character.velocity -= character.upDirection * vDot;
         }
+
+        character.justJumped = false;
+        // Updating final position
+        transform.SetPosition(position);
+    }
+}
+
+void CharacterMovementSystem::snapToFloor(const Vector3& original_pos, Vector3& position, const Vector3& coll_scale, CharacterBodyComponent& character, const Entity self, const float deltaTime)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    auto collisionSystem = coordinator.GetSystem<CollisionSystem>();
+
+    // Conditions to allow snapping
+    if (character.justJumped)
+    {
+        // utility::log("jumped");
+        return;
+    }
+
+
+    Vector3 up = character.upDirection.GetNormal();
+
+
+    // If the slide test determined a floor collision we just need to move it up here
+    // if (character.isOnFloor)
+    // {
+    //     // position += up * character.floorSnapDistance;
+    // }
+    // else
+    // {
+    // Only snap when falling or stationary
+    if (character.velocity.GetDotProduct(up) > 0)
+        return;
+
+    // Ray origin at feet
+    // Vector3 rayOrigin = position - up * character.halfHeight;
+    Vector3 rayOrigin = position - up * coll_scale + up * 0.1f;
+    // if (character.isOnFloor)
+    // {
+        // rayOrigin = position - up * coll_scale + up * 0.1f;
+        // rayOrigin += up * character.floorSnapDistance;
+    // }
+    Ray3 ray(rayOrigin, up * -1.f);
+
+    RaycastResult hit;
+    hit.Reset();
+    hit.t = character.floorSnapDistance;
+
+    float snapLength = character.floorSnapDistance;
+    float fallDistance = -character.velocity.GetDotProduct(up) * deltaTime;
+    utility::log(std::to_string(fallDistance));
+    snapLength += std::max(0.0f, fallDistance);
+
+    std::unordered_set<Entity> ents_to_check = collisionSystem->QueryStaticRay(ray, snapLength);
+
+    // utility::log("Ents to check: " + std::to_string(ents_to_check.size()));
+    for (const auto& e : ents_to_check)
+    {
+        if (e == self)
+            continue;
+
+        const auto& coll = coordinator.GetComponent<ColliderComponent>(e);
+        const auto& tf   = coordinator.GetComponent<Transform3DComponent>(e);
+
+        RaycastResult tmp;
+        collisionSystem->RaycastCollider(ray, tmp, coll);
+
+        if (!tmp.hit)
+            continue;
+
+        if (tmp.normal.GetDotProduct(up) < character.floorThreshold)
+            continue;
+
+        if (tmp.t < hit.t)
+            hit = tmp;
+    }
+
+    if (!hit.hit)
+    {
+        // utility::log("Exit 1");
+        return;
+    }
+
+    //SNAP
+    const float desired = character.safeMargin;
+    float correction = desired - hit.t;
+
+    correction = std::clamp(
+        correction,
+        -character.floorSnapDistance,
+         character.floorSnapDistance
+    );
+
+    position += up * correction;
+
+    if (hit.hit)
+    {
+        character.isOnFloor = true;
     }
 }

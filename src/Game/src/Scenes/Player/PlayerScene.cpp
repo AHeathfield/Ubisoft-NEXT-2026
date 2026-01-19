@@ -93,13 +93,12 @@ void PlayerScene::Update(const float deltaTime)
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
 	auto& character = coordinator.GetComponent<CharacterBodyComponent>(mPlayer);
 	const auto& coll = coordinator.GetComponent<ColliderComponent>(mPlayer);
+    // utility::log("Pos: " + transform.GetPosition().GetString());
 
 
     // Applying custom gravity
-    // if (!character.isOnFloor)
-    // {
-    //     character.velocity = character.upDirection *  -1.f * _GRAVITY;
-    // }
+    if (!character.isOnFloor)
+        character.velocity = character.upDirection *  -1.f * _GRAVITY;
 
 	Vector2 newMousePos, mouseMovement;
 	App::GetMousePos(newMousePos.x, newMousePos.y);
@@ -138,8 +137,12 @@ void PlayerScene::Update(const float deltaTime)
 	if (App::IsKeyPressed(App::KEY_S))
         moveBackward();
 
-    if (mMovedXZ)
-        character.velocity = mInputDir.GetNormal() * _SPEED;
+    if (mMovedXZ && mInputDir.GetMagnitudeSquared())
+    {
+        Vector3 newVel = mInputDir.GetNormal() * _SPEED;
+        character.velocity.x = newVel.x;
+        character.velocity.z = newVel.z;
+    }
     else
         moveToRest(character);
 
@@ -166,19 +169,9 @@ void PlayerScene::Update(const float deltaTime)
     // utility::log(transform.GetPosition().GetString());
     mCamera->SetTransform(transform);
     mCamera->UpdateView();
-	// coordinator.GetSystem<Render3DSystem>()->UpdateCamera(camera, transform);
 }
 
 
-// void PlayerScene::Render()
-// {
-// 	// const auto& collider = coordinator.GetComponent<ColliderComponent>(mPlayer);
-//
-// 	if (mIsColliding)
-// 	{
-// 		App::Print(100, 100, "Player is colliding!");
-// 	}
-// }
 
 
 void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionManifold& collision)
@@ -255,6 +248,7 @@ void PlayerScene::moveToRest(CharacterBodyComponent& character)
 void PlayerScene::jump(CharacterBodyComponent& character, const float speed)
 {
     character.velocity = character.upDirection * speed;
+    character.justJumped = true;
 }
 
 

@@ -22,12 +22,13 @@ struct CharacterBodyComponent
     // Detection properties
     // This is the dot product of a vector and the UP vector (basically the angle but calculations are faster)
     float floorThreshold = 0.7f; // ~ 45 deg
-    float floorSnapDistance = 0.5f;
+    float floorSnapDistance = 0.2f;
 
-    // States (for users defined code)
+    // States 
     bool isOnFloor = false;
     bool isOnCeiling = false;
     bool isOnWall = false;
+    bool justJumped = false;
 
     CharacterBodyComponent() = default;
     CharacterBodyComponent(const Vector3& up_direction, const uint8_t max_slides, const float safe_margin, const float floor_angle_deg, const float floor_snap_distance)

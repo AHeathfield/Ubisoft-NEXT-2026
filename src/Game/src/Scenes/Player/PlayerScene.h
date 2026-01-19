@@ -33,9 +33,10 @@ private:
 
 private:
     static constexpr float _SPEED = 8.0f;
-    static constexpr float _JUMP = 25.f;
-    static constexpr float _GRAVITY = 18.f;
+    static constexpr float _JUMP = 200.f;
+    static constexpr float _GRAVITY = 10.f;
     static constexpr float _SENS = 0.2f;
+    static constexpr float _EPS = 0.00000001f;
 
 private:
     Entity mPlayer = -1;
