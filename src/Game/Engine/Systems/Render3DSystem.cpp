@@ -4,6 +4,7 @@
 #include "../Components/ColliderComponent.h"
 #include "../Components/Transform3DComponent.h"
 #include "../../../ContestAPI/AppSettings.h"
+#include <memory>
 #include <string>
 #include "../../config.h"
 
@@ -82,13 +83,14 @@ void Render3DSystem::Render()
 	mRenderer.DrawAll();
 }
 
+
 void Render3DSystem::DrawMesh(const Mesh& mesh, const Transform3DComponent& transform)
 {
 	mAdditionalRenders.push_back(MeshRender{mesh, transform});
 	// mRenderer.DrawMesh(mesh, transform.GetWorldMatrix());
 }
 
-void Render3DSystem::SetCamera(Camera* camera)
+void Render3DSystem::SetCamera(std::shared_ptr<Camera> camera)
 {
     mCamera = camera;
 }

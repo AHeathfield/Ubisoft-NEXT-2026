@@ -11,7 +11,7 @@
 
 // A Rigidbody is an object that does not change its shape, its rigid.
 // If you dropped a ball thats rigid when it hits the ground the shape of the ball won't change
-struct RigidbodyComponent
+struct RigidBodyComponent
 {
     bool isStatic = false;
     bool isAwake = true;

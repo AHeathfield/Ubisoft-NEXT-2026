@@ -10,7 +10,7 @@ struct RaycastResult
     float t = -1.f;
     bool hit = false;
 
-    void ResetRaycastResult()
+    void Reset()
     {
         t = -1;
         hit = false;

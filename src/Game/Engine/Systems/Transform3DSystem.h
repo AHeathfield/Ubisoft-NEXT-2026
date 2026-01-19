@@ -6,5 +6,6 @@
 class Transform3DSystem : public System
 {
 public:
+    // void OnEntityAdded(Entity entity) override;
     void Update(float deltaTime) override;
 };

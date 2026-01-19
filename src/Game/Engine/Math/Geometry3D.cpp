@@ -456,7 +456,7 @@ namespace Geometry3D
     // Negative values mean no collision
     bool Raycast(const Sphere& sphere, const Ray3& ray, RaycastResult& outResult)
     {
-        outResult.ResetRaycastResult();
+        outResult.Reset();
 
         // Vector from origin of ray to center of sphere
         Vector3 e = sphere.position - ray.origin;
@@ -501,15 +501,54 @@ namespace Geometry3D
         Vector3 max = aabb.GetMax();
 
         // Finding both intersections of the ray against each of the 3 slabs which make up a bounding box
-        // NOTE: Any component of direction could be 0
-        // TODO: Add safety checks
         float t[6] = {0, 0, 0, 0, 0, 0};
-        t[0] = (min.x - ray.origin.x) / ray.direction.x;
-        t[1] = (max.x - ray.origin.x) / ray.direction.x;
-        t[2] = (min.y - ray.origin.y) / ray.direction.y;
-        t[3] = (max.y - ray.origin.y) / ray.direction.y;
-        t[4] = (min.z - ray.origin.z) / ray.direction.z;
-        t[5] = (max.z - ray.origin.z) / ray.direction.z;
+
+        // Safety checks
+        if (CMP_FLOAT(ray.direction.x, 0.f))
+        {
+            // Ray is parallel and outside the box therefore will never intersect the box
+            if (ray.origin.x < min.x || ray.origin.x > max.x)
+                return false;
+
+            // Remember it doesn't really matter what these values are, we just want to know if 
+            // its parallel is it atleast going into the box?
+            t[0] = -FLT_MAX;
+            t[1] = FLT_MAX;
+        }
+        else
+        {
+            t[0] = (min.x - ray.origin.x) / ray.direction.x;
+            t[1] = (max.x - ray.origin.x) / ray.direction.x;
+        }
+        if (CMP_FLOAT(ray.direction.y, 0.f))
+        {
+            if (ray.origin.y < min.y || ray.origin.y > max.y)
+                return false;
+
+            t[2] = -FLT_MAX;
+            t[3] = FLT_MAX;
+
+        }
+        else
+        {
+            t[2] = (min.y - ray.origin.y) / ray.direction.y;
+            t[3] = (max.y - ray.origin.y) / ray.direction.y;
+        }
+        if (CMP_FLOAT(ray.direction.z, 0.f))
+        {
+            if (ray.origin.z < min.z || ray.origin.z > max.z)
+                return false;
+
+            t[4] = -FLT_MAX;
+            t[5] = FLT_MAX;
+
+        }
+        else
+        {
+            t[4] = (min.z - ray.origin.z) / ray.direction.z;
+            t[5] = (max.z - ray.origin.z) / ray.direction.z;
+        }
+
 
         // Finding largest min value
         float tmin = fmaxf(
@@ -544,9 +583,12 @@ namespace Geometry3D
         if (tmin < 0.f)
             t_result = tmax;
 
-        outResult.t = t_result;
+        // For Collision testing with rays and character bodies, using tmin just gives better results
+        // Especially with Godots slide
+        // outResult.t = t_result;
+        outResult.t = tmin;
         outResult.hit = true;
-        outResult.point = ray.origin + ray.direction * t_result;
+        outResult.point = ray.origin + ray.direction * tmin; //t_result;
         Vector3 normals[6] = {
             Vector3(-1.f, 0, 0),
             Vector3(1.f, 0, 0),
@@ -571,7 +613,7 @@ namespace Geometry3D
     // Similar to AABB raycast
     bool Raycast(const OBB& obb, const Ray3& ray, RaycastResult& outResult)
     {
-        outResult.ResetRaycastResult();
+        outResult.Reset();
 
         const std::array<float, 3> size = obb.size.GetArray();
 
@@ -601,7 +643,7 @@ namespace Geometry3D
         float t[6] = {0, 0, 0, 0, 0, 0};
         for (int i = 0; i < 3; i++)
         {
-            if (CMP_FLOAT(f[i], 0))
+            if (CMP_FLOAT(f[i], 0.f))
             {
                 // If the ray is parallel to the slab being tested and the origin of the ray is not inside the slab we have no hit
                 if (-e[i] - size[i] > 0 || -e[i] + size[i] < 0)
@@ -672,7 +714,7 @@ namespace Geometry3D
     // The idea is to solve for the unknown t which satisfies the plane equation
     bool Raycast(const Plane& plane, const Ray3& ray, RaycastResult& outResult)
     {
-        outResult.ResetRaycastResult();
+        outResult.Reset();
 
         float nd = ray.direction.GetDotProduct(plane.normal);
         float pn = ray.origin.GetDotProduct(plane.normal);
@@ -1123,7 +1165,7 @@ namespace Geometry3D
     // Also we dont need to check if point is in triangle since barycentric coordinates will tell us if it does
     bool Raycast(const Triangle& triangle, const Ray3& ray, RaycastResult& outResult)
     {
-        outResult.ResetRaycastResult();
+        outResult.Reset();
 
         // Create a plane a cast the ray against the plane
         // If ray does not hit the plane the ray will not hit the triangle
@@ -1328,7 +1370,7 @@ namespace Geometry3D
     // The Game Physcis Cookbook kept this one as a float return for some reason im just changing it
     bool Raycast(const Mesh& mesh, const Ray3& ray, RaycastResult& outResult)
     {
-        outResult.ResetRaycastResult();
+        outResult.Reset();
         // If mesh has no accelerator we simple check every triangle in the mesh in a linear fashion
         if (mesh.accelerator == nullptr)
         {
@@ -1914,10 +1956,10 @@ namespace Geometry3D
         // If the closest point is at the center of the sphere we can't easily build a collision normal
         // if thats the case we try to find a new closest point
         Vector3 normal;
-        if (CMP_FLOAT(distanceSq, 0))
+        if (CMP_FLOAT(distanceSq, 0.f))
         {
             float mSq = (closestPoint - obbA.position).GetMagnitudeSquared();
-            if (CMP_FLOAT(mSq, 0))
+            if (CMP_FLOAT(mSq, 0.f))
                 return result;
 
             // Closest point is at the center of the spehere
@@ -2000,7 +2042,7 @@ namespace Geometry3D
         // Ensuring that the line and plane intersect
         Vector3 ab = line.end - line.start;
         float nAB = plane.normal.GetDotProduct(ab);
-        if (CMP_FLOAT(nAB, 0))
+        if (CMP_FLOAT(nAB, 0.f))
             return 0;
 
         // Finding time along the line at which it intersects the plane
@@ -2201,7 +2243,7 @@ namespace Geometry3D
         Vector3 result = axisA.GetCrossProduct(axisB);
 
         // Cross prod != 0 therefore not parallel
-        if (!CMP_FLOAT(result.GetMagnitudeSquared(), 0))
+        if (!CMP_FLOAT(result.GetMagnitudeSquared(), 0.f))
         {
             return result;
         }
@@ -2211,7 +2253,7 @@ namespace Geometry3D
             Vector3 temp = axisA.GetPerpendicularVector();
             result = axisA.GetCrossProduct(temp);
 
-            if (!CMP_FLOAT(result.GetMagnitudeSquared(), 0))
+            if (!CMP_FLOAT(result.GetMagnitudeSquared(), 0.f))
                 return result; // Not parallel
             else
                 return Vector3(0, 0, 0); // No way to get proper cross product

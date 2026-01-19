@@ -391,6 +391,7 @@ public:
     virtual void Render() {}
     virtual void OnEntityAdded(Entity entity) {}
     virtual void OnEntityRemoved(Entity entity) {}
+    virtual void Close() {}
 
     void SetActive(const bool active) { mActive = active; }
     bool IsActive() const { return mActive; }

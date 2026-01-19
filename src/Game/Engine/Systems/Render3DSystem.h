@@ -18,11 +18,11 @@ class Render3DSystem : public System
 public:
     void Init() override;
     void Update(float deltaTime) override;
-
     void Render() override;
-    void DrawMesh(const Mesh& mesh, const Transform3DComponent& transform);
 
-    void SetCamera(Camera* camera);
+
+    void DrawMesh(const Mesh& mesh, const Transform3DComponent& transform);
+    void SetCamera(std::shared_ptr<Camera> camera);
     // Ideally I would have like a camera pointer or something
     // void UpdateCamera(const CameraComponent& camera, const Vector3& position);
 
@@ -34,7 +34,7 @@ private:
         Transform3DComponent transform;
     };
 
-    Camera* mCamera = nullptr;
+    std::shared_ptr<Camera> mCamera = nullptr;
     GraphicsRenderer mRenderer = GraphicsRenderer();
     std::vector<MeshRender> mAdditionalRenders;
 };

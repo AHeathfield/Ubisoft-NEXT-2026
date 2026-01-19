@@ -12,9 +12,10 @@ public:
     void Update(float deltaTime) override;
 
 private:
-    Entity mCube;
-    Entity mSphere;
-    Entity mFloor;
-    Entity mZombie;
-    Entity mBird;
+    Entity mCube = -1;
+    Entity mSphere = -1;
+    Entity mFloor = -1;
+    Entity mWall = -1;
+    Entity mZombie = -1;
+    Entity mBird = -1;
 };

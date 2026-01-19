@@ -70,8 +70,6 @@ namespace Geometry3D
     // In this engine a ray has an origin and a direction, we need to see how much time it takes before the ray hits something so we assume that it takes 1 second to travel 1 unit along ray
     // Another way to think of t is the distance from the ray to first collision point
     // If it does not intersect t is undefined which we represent with a negative number
-    // TODO: Add a FixedRay class that behaves like Godot Rays where they bascially tell you the first thing they collide with (NOT SURE IF IM GOING TO DO THIS)
-    // TODO: Maybe make it so that Raycast just returns RaycastResult instead of bool
     bool Raycast(const Sphere& sphere, const Ray3& ray, RaycastResult& outResult);
     bool Raycast(const AABB& aabb, const Ray3& ray, RaycastResult& outResult);
     bool Raycast(const OBB& obb, const Ray3& ray, RaycastResult& outResult);

@@ -8,7 +8,8 @@ struct CollisionManifold
 {
     bool isColliding = false;
     Vector3 normal = Vector3::FORWARD;
-    float depth = FLT_MAX;
+    float depth = FLT_MAX; // Amount of penetration
+
     std::vector<Vector3> contacts; // Contact points
  
     void Reset()

@@ -25,12 +25,11 @@ struct ColliderComponent
     // Union can only be 1 of these values
     union Collider
     {
-	AABB aabb;
-	OBB obb;
-	Plane plane;
-	Sphere sphere;
-	Triangle triangle;
-
+        AABB aabb;
+        OBB obb;
+        Plane plane;
+        Sphere sphere;
+        Triangle triangle;
     } collider = {.aabb = AABB()}; // Default
 
     // If it is a meshCollider I want it to be separate from the render mesh so transforms applied don't effect the render
@@ -62,24 +61,24 @@ struct ColliderComponent
 	switch (collider_shape)
 	{
 	    case ShapeType::AABB_3D:
-		collider.aabb = AABB();
-		break;
+            collider.aabb = AABB();
+            break;
 	    case ShapeType::OBB_3D:
-		collider.obb = OBB();
-		break;
+            collider.obb = OBB();
+            break;
 	    case ShapeType::PLANE_3D:
-		collider.plane = Plane();
-		break;
+            collider.plane = Plane();
+            break;
 	    case ShapeType::SPHERE_3D:
-		collider.sphere = Sphere();
-		break;
+            collider.sphere = Sphere();
+            break;
 	    case ShapeType::TRIANGLE_3D:
-		collider.triangle = Triangle::YUpTriangle();
-		break;
+            collider.triangle = Triangle::YUpTriangle();
+            break;
 	    case ShapeType::MESH_3D:
-		meshColliderOriginal = Mesh();
-		meshCollider = Mesh();
-		break;
+            meshColliderOriginal = Mesh();
+            meshCollider = Mesh();
+            break;
 	}
 
 #if DEBUG_MODE
@@ -124,27 +123,27 @@ struct ColliderComponent
 
     void UpdateWorldSpace(const Transform3DComponent& transform)
     {
-	switch (shape)
-	{
-	    case ShapeType::AABB_3D:
-		collider.aabb = Geometry3D::GetTransformedAABB(transform);
-		break;
-	    case ShapeType::OBB_3D:
-		collider.obb = Geometry3D::GetTransformedOBB(transform);
-		break;
-	    case ShapeType::PLANE_3D:
-		collider.plane = Geometry3D::GetTransformedPlane(transform);
-		break;
-	    case ShapeType::SPHERE_3D:
-		collider.sphere = Geometry3D::GetTransformedSphere(transform);
-		break;
-	    case ShapeType::TRIANGLE_3D:
-		collider.triangle = Geometry3D::GetTransformedTriangle(transform);
-		break;
-	    case ShapeType::MESH_3D:
-		// Transform will create a BVH tree for mesh if it doesn't have one
-		meshCollider = Geometry3D::GetTransformedMesh(meshColliderOriginal, transform);
-	}
+        switch (shape)
+        {
+            case ShapeType::AABB_3D:
+                collider.aabb = Geometry3D::GetTransformedAABB(transform);
+                break;
+            case ShapeType::OBB_3D:
+                collider.obb = Geometry3D::GetTransformedOBB(transform);
+                break;
+            case ShapeType::PLANE_3D:
+                collider.plane = Geometry3D::GetTransformedPlane(transform);
+                break;
+            case ShapeType::SPHERE_3D:
+                collider.sphere = Geometry3D::GetTransformedSphere(transform);
+                break;
+            case ShapeType::TRIANGLE_3D:
+                collider.triangle = Geometry3D::GetTransformedTriangle(transform);
+                break;
+            case ShapeType::MESH_3D:
+                // Transform will create a BVH tree for mesh if it doesn't have one
+                meshCollider = Geometry3D::GetTransformedMesh(meshColliderOriginal, transform);
+        }
 
 #if DEBUG_MODE
 	// Geometry3D::TransformMesh(meshRender, transform);

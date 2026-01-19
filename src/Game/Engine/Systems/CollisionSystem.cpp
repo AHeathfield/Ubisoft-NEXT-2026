@@ -2,7 +2,6 @@
 #include "../Core/GameManager.h"
 #include "../Components/ColliderComponent.h"
 #include "../../config.h"
-#include <string>
 #include <unordered_set>
 #include <vector>
 #include "Render3DSystem.h"
@@ -411,6 +410,27 @@ void CollisionSystem::OnEntityRemoved(Entity entity)
 }
 
 
+void CollisionSystem::Close()
+{
+    if (mStaticOctree != nullptr)
+    {
+        delete mStaticOctree;
+        mStaticOctree = nullptr;
+    }
+
+    if (mDynamicOctree != nullptr)
+    {
+        delete mDynamicOctree;
+        mDynamicOctree = nullptr;
+    }
+
+    mStaticEntities.clear();
+    mDynamicEntities.clear();
+    mCollisions.clear();
+    mExitings.clear();
+}
+
+
 bool CollisionSystem::CreateBVHOctree(OctreeNode*& root, const std::unordered_set<Entity>& entities, const Vector3& pos, float size)
 {
 	// If there already is a BVHroot
@@ -435,6 +455,91 @@ bool CollisionSystem::CreateBVHOctree(OctreeNode*& root, const std::unordered_se
 	splitOctree(root, 5);
 	return true;
 }
+
+
+CollisionManifold CollisionSystem::GetClosestStaticManifold(const ColliderComponent& collider)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    std::unordered_set<Entity> ents_to_check = queryOctree(mStaticOctree, collider);
+
+    return getClosestManifold(collider, ents_to_check);
+}
+
+
+CollisionManifold CollisionSystem::GetClosestDynamicManifold(const ColliderComponent& collider)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    std::unordered_set<Entity> ents_to_check = queryOctree(mDynamicOctree, collider);
+
+    return getClosestManifold(collider, ents_to_check);
+}
+
+
+std::unordered_set<Entity> CollisionSystem::QueryStaticCollider(const ColliderComponent& collider)
+{
+    return queryOctree(mStaticOctree, collider);
+}
+
+
+std::unordered_set<Entity> CollisionSystem::QueryDynamicCollider(const ColliderComponent& collider)
+{
+    return queryOctree(mDynamicOctree, collider);
+}
+
+
+// For now its just a switch, if its too slow I can make it into a tiny dispatch table
+bool CollisionSystem::RaycastCollider(const Ray3& ray, RaycastResult& outResult, const ColliderComponent& colliderComp)
+{
+    switch (colliderComp.shape)
+    {
+        case ShapeType::AABB_3D:
+            return Geometry3D::Raycast(colliderComp.collider.aabb, ray, outResult);
+        case ShapeType::OBB_3D:
+            return Geometry3D::Raycast(colliderComp.collider.obb, ray, outResult);
+        case ShapeType::SPHERE_3D:
+            return Geometry3D::Raycast(colliderComp.collider.sphere, ray, outResult);
+        case ShapeType::PLANE_3D:
+            return Geometry3D::Raycast(colliderComp.collider.plane, ray, outResult);
+        case ShapeType::TRIANGLE_3D:
+            return Geometry3D::Raycast(colliderComp.collider.triangle, ray, outResult);
+        case ShapeType::MESH_3D:
+            return Geometry3D::Raycast(colliderComp.meshCollider, ray, outResult);
+    }
+}
+
+
+bool CollisionSystem::RaycastStatic(const Ray3& ray, RaycastResult& outResult, const float rayLength)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    std::unordered_set<Entity> ents_to_check = queryRayOctree(mStaticOctree, ray, rayLength);
+    outResult = getClosestRaycast(ray, rayLength, ents_to_check);
+
+    return outResult.hit;
+}
+
+
+bool CollisionSystem::RaycastDynamic(const Ray3& ray, RaycastResult& outResult, const float rayLength)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    std::unordered_set<Entity> ents_to_check = queryRayOctree(mDynamicOctree, ray, rayLength);
+    outResult = getClosestRaycast(ray, rayLength, ents_to_check);
+
+    return outResult.hit;
+}
+
+std::unordered_set<Entity> CollisionSystem::QueryStaticRay(const Ray3&ray, const float rayLength)
+{
+    return queryRayOctree(mStaticOctree, ray, rayLength);
+}
+
+
+std::unordered_set<Entity> CollisionSystem::QueryDynamicRay(const Ray3&ray, const float rayLength)
+{
+    return queryRayOctree(mDynamicOctree, ray, rayLength);
+}
+
 
 
 // PRIVATE METHODS
@@ -622,6 +727,86 @@ std::unordered_set<Entity> CollisionSystem::queryOctree(OctreeNode* node, const 
 }
 
 
+
+std::unordered_set<Entity> CollisionSystem::queryRayOctree(OctreeNode* node, const Ray3& ray, const float rayLength)
+{
+	std::unordered_set<Entity> result;
+
+	// Making temporary collider component for the bounds
+	ColliderComponent bounds_col;
+	bounds_col.shape = ShapeType::AABB_3D;
+	bounds_col.collider.aabb = node->bounds;
+
+    RaycastResult raycastResult;
+    RaycastCollider(ray, raycastResult, bounds_col);
+
+    // Only do things if the query collider intersects with node bounds (aabb)
+    if (raycastResult.hit)// && raycastResult.t < rayLength)
+    {
+        // If leaf node return any entities which are intersecting with query box
+        if (node->children == nullptr)
+        {
+            Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+            int num_entities = node->entities.size();
+            for (int i = 0; i < num_entities; i++)
+            {
+                Entity ent = node->entities[i];
+                const auto& ent_col = coordinator.GetComponent<ColliderComponent>(ent);
+
+                raycastResult.Reset();
+                RaycastCollider(ray, raycastResult, ent_col);
+
+                if (raycastResult.hit && raycastResult.t < rayLength)
+                {
+                    result.insert(ent);
+                }
+            }
+        }
+        else // Not leaf node, recursively collect all intersecting shapes from the child nodes
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                std::unordered_set<Entity> child = queryRayOctree(&(node->children[i]), ray, rayLength);
+
+                if (child.size() > 0)
+                {
+                    result.insert(child.begin(), child.end());
+                }
+            }
+        }
+    }
+
+	return result;
+}
+
+
+RaycastResult CollisionSystem::getClosestRaycast(const Ray3& ray, const float rayLength, const std::unordered_set<Entity>& ents_to_check)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    RaycastResult result;
+    RaycastResult testResult;
+    result.t = FLT_MAX;
+
+    for (const auto& entityB : ents_to_check)
+    {
+        testResult.Reset();
+
+        const auto& collB = coordinator.GetComponent<ColliderComponent>(entityB);
+
+        RaycastCollider(ray, testResult, collB);
+
+        if (testResult.hit && testResult.t < result.t)
+            result = testResult;
+    }
+
+    return result;
+}
+
+
+
+
+
 void CollisionSystem::transformColliders()
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
@@ -666,7 +851,6 @@ void CollisionSystem::checkCollisions()
 		if (colA.isActive)
 		{
 			// Dynamic vs static collision check
-			// FIX: HERE
 			std::unordered_set<Entity> ents_to_check_static = queryOctree(mStaticOctree, colA);
 			for (const auto& entityB : ents_to_check_static)
 			{
@@ -856,3 +1040,20 @@ CollisionManifold CollisionSystem::getManifold(const ColliderComponent& colA, co
 	return manifoldFunc(colA, colB);
 }
 
+
+CollisionManifold CollisionSystem::getClosestManifold(const ColliderComponent& collider, const std::unordered_set<Entity> ents_to_check)
+{
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    CollisionManifold closest;
+    CollisionManifold test;
+    for (const auto& entity : ents_to_check)
+    {
+        const auto& other_col = coordinator.GetComponent<ColliderComponent>(entity);
+
+        test = getManifold(collider, other_col);
+        if (test.isColliding && test.depth < closest.depth)
+            closest = test;
+    }
+
+    return closest;
+}

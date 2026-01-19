@@ -2,13 +2,13 @@
 
 #include "../Core/ECS.h"
 #include "../Math/Vector3.h"
-#include "../Components/RigidbodyComponent.h"
+#include "../Components/RigidBodyComponent.h"
 #include "../Physics/CollisionManifold.h"
 #include <unordered_set>
 
 // Handles rigid bodies
 // This system uses linear projection but more modern engines use an iterative physics solver, see https://www.gdcvault.com/play/1020603/Physics-for-Game-Programmers-Understanding
-class RigidbodySystem : public System
+class RigidBodySystem : public System
 {
 public:
     // Apply Forces -> Apply impulses (collision response) -> Integrate Velocity and Positions -> Adjustments
@@ -30,14 +30,14 @@ private:
         Entity entB;
         CollisionManifold collision;
     };
-    void applyForces(RigidbodyComponent& rb);
+    void applyForces(RigidBodyComponent& rb);
     void applyImpulse(const ImpulseData& impData, int c);
     void addRotationalImpulse(Entity ent, const Vector3& point, const Vector3& impulse);
 
     // This is the ApplyImpulse from TB pre much
     void physicsResponse(Entity self, Entity other, const CollisionManifold& collision);
 
-    bool shouldSleep(RigidbodyComponent& rb) const;
+    bool shouldSleep(RigidBodyComponent& rb) const;
 
 
 private:

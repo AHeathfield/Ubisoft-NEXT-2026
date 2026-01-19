@@ -9,10 +9,13 @@
 #include "../Components/ColliderComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Components/AudioComponent.h"
-#include "../Components/RigidbodyComponent.h"
+#include "../Components/CharacterBodyComponent.h"
+#include "../Components/RigidBodyComponent.h"
 #include "../Systems/Render3DSystem.h"
 #include "../Systems/CollisionSystem.h"
-#include "../Systems/RigidbodySystem.h"
+#include "../Systems/CharacterMovementSystem.h"
+// #include "../Systems/CharacterSnapSystem.h"
+#include "../Systems/RigidBodySystem.h"
 #include "../Systems/Transform3DSystem.h"
 #include "../Systems/Transform2DSystem.h"
 #include "../Systems/SpriteSystem.h"
@@ -39,7 +42,8 @@ void GameManager::Start()
     mCoordinator.RegisterComponent<Transform3DComponent>();
     mCoordinator.RegisterComponent<Transform2DComponent>();
     mCoordinator.RegisterComponent<ColliderComponent>();
-    mCoordinator.RegisterComponent<RigidbodyComponent>();
+    mCoordinator.RegisterComponent<RigidBodyComponent>();
+    mCoordinator.RegisterComponent<CharacterBodyComponent>();
 
     setUpSystems();
 }
@@ -52,6 +56,12 @@ void GameManager::Close()
     {
         itr->second->Exit();
     }
+
+    for (int i = mSystemsStack.size() - 1; i >= 0; i--)
+    {
+        mSystemsStack[i]->Close();
+    }
+
     mScenes.clear();
     mScenesStack.clear();
     mSystemsStack.clear();
@@ -336,14 +346,34 @@ void GameManager::setUpSystems()
         mCoordinator.SetSystemSignature<CollisionSystem>(signature);
     }
 
-    // Rigidbody System
-    auto rigidbodySystem = mCoordinator.RegisterSystem<RigidbodySystem>();
+    // RigidBody System
+    auto rigidBodySystem = mCoordinator.RegisterSystem<RigidBodySystem>();
     {
         Signature signature;
-        signature.set(mCoordinator.GetComponentType<RigidbodyComponent>());
+        signature.set(mCoordinator.GetComponentType<RigidBodyComponent>());
         signature.set(mCoordinator.GetComponentType<Transform3DComponent>());
-        mCoordinator.SetSystemSignature<RigidbodySystem>(signature);
+        mCoordinator.SetSystemSignature<RigidBodySystem>(signature);
     }
+
+
+    // Character Movement System
+    auto characterMovementSystem = mCoordinator.RegisterSystem<CharacterMovementSystem>();
+    {
+        Signature signature;
+        signature.set(mCoordinator.GetComponentType<CharacterBodyComponent>());
+        signature.set(mCoordinator.GetComponentType<Transform3DComponent>());
+        signature.set(mCoordinator.GetComponentType<ColliderComponent>());
+        mCoordinator.SetSystemSignature<CharacterMovementSystem>(signature);
+    }
+
+    // Character Snapping System
+    // auto characterSnapSystem = mCoordinator.RegisterSystem<CharacterSnapSystem>();
+    // {
+    //     Signature signature;
+    //     signature.set(mCoordinator.GetComponentType<CharacterBodyComponent>());
+    //     signature.set(mCoordinator.GetComponentType<Transform3DComponent>());
+    //     mCoordinator.SetSystemSignature<CharacterSnapSystem>(signature);
+    // }
 
     // Transform3D System
     auto transform2DSystem = mCoordinator.RegisterSystem<Transform2DSystem>();
@@ -366,9 +396,11 @@ void GameManager::setUpSystems()
     mSystemsStack.push_back(transform3DSystem);
     mSystemsStack.push_back(spriteSystem);
     mSystemsStack.push_back(render3DSystem);
+    // mSystemsStack.push_back(characterSnapSystem);
     mSystemsStack.push_back(collisionSystem);
-    mSystemsStack.push_back(rigidbodySystem);
-    // mSystemsStackOrder[1] = "RigidbodySystem";
+    mSystemsStack.push_back(characterMovementSystem);
+    mSystemsStack.push_back(rigidBodySystem);
+    // mSystemsStackOrder[1] = "RigidBodySystem";
     // mSystemsStackOrder[2] = "CollisionSystem";
     // mSystemsStackOrder[3] = "Render3DSystem";
     // mSystemsStackOrder[4] = "SpriteSystem";

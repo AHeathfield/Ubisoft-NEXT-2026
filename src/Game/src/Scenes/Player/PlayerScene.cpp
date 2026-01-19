@@ -5,7 +5,8 @@
 #include "../../../Engine/Components/Transform3DComponent.h"
 #include "../../../Engine/Components/ColliderComponent.h"
 // #include "../../../Engine/Components/CameraComponent.h"
-#include "../../../Engine/Components/RigidbodyComponent.h"
+// #include "../../../Engine/Components/RigidBodyComponent.h"
+#include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
 #include "../../Components/TestComponent.h"
 #include "../../Systems/TestSystem.h"
@@ -41,12 +42,6 @@ void PlayerScene::Enter()
         )
 	);
 	coordinator.AddComponent(
-			mPlayer, 
-			RigidbodyComponent{
-	               .mass = 3.f
-	           }
-	);
-	coordinator.AddComponent(
 			mPlayer,
 			ColliderComponent(
 				ColliderType::DYNAMIC,
@@ -63,6 +58,9 @@ void PlayerScene::Enter()
 			)
 	);
 	coordinator.AddComponent(
+			mPlayer, CharacterBodyComponent()
+	);
+	coordinator.AddComponent(
 			mPlayer, AudioComponent{}
 	);
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
@@ -73,7 +71,7 @@ void PlayerScene::Enter()
 
 
 	// Creating the camera instance
-	mCamera = std::make_unique<Camera>();
+	mCamera = std::make_shared<Camera>();
     // mCamera->UpdateProjection();
 
 	// Initial prev mouse pos to middle (I think the virtual stuff through it off, ideally there is a way to remove the cursor lol)
@@ -82,14 +80,26 @@ void PlayerScene::Enter()
 	// APP_VIRTUAL_TO_NATIVE_COORDS(mPrevMousePos.x, mPrevMousePos.y)
 
 	// Setting the render camera to the player camera
-	coordinator.GetSystem<Render3DSystem>()->SetCamera(mCamera.get());
+	coordinator.GetSystem<Render3DSystem>()->SetCamera(mCamera);
 }
+
 
 void PlayerScene::Update(const float deltaTime)
 {
-	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    mMovedXZ = false;
+    mInputDir = Vector3(0.f, 0.f, 0.f);
 
+	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
+	auto& character = coordinator.GetComponent<CharacterBodyComponent>(mPlayer);
+	const auto& coll = coordinator.GetComponent<ColliderComponent>(mPlayer);
+
+
+    // Applying custom gravity
+    // if (!character.isOnFloor)
+    // {
+    //     character.velocity = character.upDirection *  -1.f * _GRAVITY;
+    // }
 
 	Vector2 newMousePos, mouseMovement;
 	App::GetMousePos(newMousePos.x, newMousePos.y);
@@ -118,20 +128,33 @@ void PlayerScene::Update(const float deltaTime)
     transform.SetRotationRAD(rotation);
     mCamera->SetTransform(transform);
 
+    // Getting the input direction
 	if (App::IsKeyPressed(App::KEY_A))
-        moveLeft(transform, _SPEED * deltaTime);
+        moveLeft();
 	if (App::IsKeyPressed(App::KEY_D))
-        moveRight(transform, _SPEED * deltaTime);
+        moveRight();
 	if (App::IsKeyPressed(App::KEY_W))
-        moveForward(transform, _SPEED * deltaTime);
+        moveForward();
 	if (App::IsKeyPressed(App::KEY_S))
-        moveBackward(transform, _SPEED * deltaTime);
+        moveBackward();
+
+    if (mMovedXZ)
+        character.velocity = mInputDir.GetNormal() * _SPEED;
+    else
+        moveToRest(character);
+
+    // Jump
+    if (App::IsKeyPressed(App::KEY_SPACE) && character.isOnFloor)
+        jump(character, _JUMP);
+
 
 	// For testing with flying
-	if (App::IsKeyPressed(App::KEY_SPACE) || App::IsKeyPressed(App::KEY_E))
+	if (App::IsKeyPressed(App::KEY_E))
         moveUp(transform, _SPEED * deltaTime);
 	if (App::IsKeyPressed(App::KEY_Q))
         moveDown(transform, _SPEED * deltaTime);
+    if (App::IsKeyPressed(App::KEY_O))
+        transform.SetPosition(Vector3(0.f, 0.f, 0.f));
 
 	// Sound test
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
@@ -167,7 +190,7 @@ void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionMan
 
 void PlayerScene::onCollisionStay(Entity self, Entity other, const CollisionManifold& collision)
 {
-	utility::log("Stay");
+    // utility::log("Stay");
 }
 
 
@@ -178,33 +201,64 @@ void PlayerScene::onCollisionExit(Entity self, Entity other)
 }
 
 
-void PlayerScene::moveLeft(Transform3DComponent& transform, const float speed)
+void PlayerScene::moveLeft()
 {
+    Vector3 camera_look = mCamera->GetLookDirection().GetNormal();
+    camera_look.y = 0.f;
+
     // The cross of the direction facing and the world DOWN should be the right dir relative to the facing dir
-    Vector3 local_left = mCamera->GetLookDirection().GetCrossProduct(Vector3::DOWN);
-    transform.SetPosition(transform.GetPosition() + (local_left * speed));
-
+    Vector3 local_left = camera_look.GetCrossProduct(Vector3::DOWN);
+    mInputDir += local_left;
+    mMovedXZ = true;
 }
 
 
-void PlayerScene::moveRight(Transform3DComponent& transform, const float speed)
+void PlayerScene::moveRight()
 {
+    Vector3 camera_look = mCamera->GetLookDirection().GetNormal();
+    camera_look.y = 0.f;
+
     // The cross of the direction facing and the world UP should be the right dir relative to the facing dir
-    Vector3 local_right = mCamera->GetLookDirection().GetCrossProduct(Vector3::UP);
-    transform.SetPosition(transform.GetPosition() + (local_right * speed));
+    Vector3 local_right = camera_look.GetCrossProduct(Vector3::UP);
+    mInputDir += local_right;
+    mMovedXZ = true;
+
 }
 
 
-void PlayerScene::moveForward(Transform3DComponent& transform, const float speed)
+void PlayerScene::moveForward()
 {
-    transform.SetPosition(transform.GetPosition() + mCamera->GetLookDirection() * speed);
+    // The cross of the direction
+    Vector3 camera_look = mCamera->GetLookDirection().GetNormal();
+    camera_look.y = 0.f;
+
+    mInputDir += camera_look;
+    mMovedXZ = true;
 }
-void PlayerScene::moveBackward(Transform3DComponent& transform, const float speed)
+void PlayerScene::moveBackward()
 {
-    transform.SetPosition(transform.GetPosition() - mCamera->GetLookDirection() * speed);
+    Vector3 camera_look = mCamera->GetLookDirection().GetNormal();
+    camera_look.y = 0.f;
+
+    mInputDir += camera_look * -1.f;// * speed;
+    mMovedXZ = true;
 }
 
 
+void PlayerScene::moveToRest(CharacterBodyComponent& character)
+{
+    character.velocity.x = utility::moveToward(character.velocity.x, 0, 1.5f);
+    character.velocity.z = utility::moveToward(character.velocity.z, 0, 1.5f);
+}
+
+
+void PlayerScene::jump(CharacterBodyComponent& character, const float speed)
+{
+    character.velocity = character.upDirection * speed;
+}
+
+
+// These are flying controls so they will just straight up change pos
 void PlayerScene::moveDown(Transform3DComponent& transform, const float speed)
 {
     Vector3 pos = transform.GetPosition();

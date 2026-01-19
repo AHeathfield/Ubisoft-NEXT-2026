@@ -95,6 +95,9 @@ public:
         return arr;
     }
 
+    // If the dot product is positive, the vectors are pointing in the same direction
+    // If the dot product is negative, the vectors point in opposing directions
+    // If the dot product is 0, the vectors are perpendicular
     float GetDotProduct(const Vector3& other) const
     {
         return x * other.x + y * other.y + z * other.z;

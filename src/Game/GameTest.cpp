@@ -13,6 +13,7 @@
 #include "../ContestAPI/app.h"
 #include "Engine/Core/GameManager.h"
 #include "src/Scenes/StartScene.h"
+#include "src/Scenes/Player/PlayerScene.h"
 #include "Engine/Core/Utility.h"
 #include "config.h"
 

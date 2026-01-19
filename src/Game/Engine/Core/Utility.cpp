@@ -107,4 +107,26 @@ namespace utility
         return (rad * 180.f / 3.141592653589f);
     }
 
+
+    float moveToward(const float from, const float to, const float delta)
+    {
+        if (from > to)
+        {
+            float temp = from - delta;
+            if (temp <= to)
+            {
+                return to;
+            }
+            return temp;
+        }
+        else
+        {
+            float temp = from + delta;
+            if (temp >= to)
+            {
+                return to;
+            }
+            return temp;
+        }
+    }
 }

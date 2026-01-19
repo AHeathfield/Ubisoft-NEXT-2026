@@ -4,7 +4,7 @@
 #include "../../Engine/Components/MeshComponent.h"
 #include "../../Engine/Components/Transform3DComponent.h"
 #include "../../Engine/Components/ColliderComponent.h"
-#include "../../Engine/Components/RigidbodyComponent.h"
+#include "../../Engine/Components/RigidBodyComponent.h"
 #include "../../Engine/Components/Transform2DComponent.h"
 #include "../../Engine/Components/SpriteComponent.h"
 #include "../../Engine/Systems/Render3DSystem.h"
@@ -31,7 +31,7 @@ void StartScene::Enter()
     );
     coordinator.AddComponent(
 	    mCube,
-	    RigidbodyComponent{
+	    RigidBodyComponent{
 	       .mass = 3.f
 	    }
     );
@@ -59,7 +59,7 @@ void StartScene::Enter()
     );
     coordinator.AddComponent(
 	    mSphere,
-	    RigidbodyComponent{}
+	    RigidBodyComponent{}
     );
     coordinator.AddComponent(
 	    mSphere,
@@ -84,7 +84,7 @@ void StartScene::Enter()
     );
     // coordinator.AddComponent(
     // 		mZombie,
-    // 		RigidbodyComponent{}
+    // 		RigidBodyComponent{}
     // );
     coordinator.AddComponent(
 	    mZombie,
@@ -109,7 +109,7 @@ void StartScene::Enter()
     );
     coordinator.AddComponent(
 	    mFloor,
-	    RigidbodyComponent{
+	    RigidBodyComponent{
             .isStatic = true,
             .mass = 0.f 
 	    }
@@ -118,7 +118,35 @@ void StartScene::Enter()
 	    mFloor,
 	    ColliderComponent(
             ColliderType::STATIC,
-            ShapeType::OBB_3D
+            ShapeType::AABB_3D
+	    )
+    );
+
+    mWall = CreateEntity();
+    coordinator.AddComponent(
+    	mWall,
+    	MeshComponent("./data/Objects/cube.obj")
+    );
+    coordinator.AddComponent(
+    	mWall,
+    	Transform3DComponent(
+	    Vector3(10.f, 10.f, 10.f),
+	    Vector3(0, 0, 0),
+	    Vector3(1.f, 10.f, 10.f)
+    	)
+    );
+    coordinator.AddComponent(
+	    mWall,
+	    RigidBodyComponent{
+            .isStatic = true,
+            .mass = 0.f 
+	    }
+    );
+    coordinator.AddComponent(
+	    mWall,
+	    ColliderComponent(
+            ColliderType::STATIC,
+            ShapeType::AABB_3D
 	    )
     );
 

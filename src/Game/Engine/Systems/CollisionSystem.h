@@ -16,7 +16,26 @@ public:
     void Update(float deltaTime) override;
     void OnEntityAdded(Entity entity) override;
     void OnEntityRemoved(Entity entity) override;
+    void Close() override;
     bool CreateBVHOctree(OctreeNode*& root, const std::unordered_set<Entity>& entities, const Vector3& pos, float size); // An Acceleration method
+
+    CollisionManifold GetClosestStaticManifold(const ColliderComponent& collider);
+    CollisionManifold GetClosestDynamicManifold(const ColliderComponent& collider);
+
+    std::unordered_set<Entity> QueryStaticCollider(const ColliderComponent& collider);
+    std::unordered_set<Entity> QueryDynamicCollider(const ColliderComponent& collider);
+
+    // This is if you want to see all the entities the ray hit and not just the first one
+    std::unordered_set<Entity> QueryStaticRay(const Ray3&ray, const float rayLength);
+    std::unordered_set<Entity> QueryDynamicRay(const Ray3&ray, const float rayLength);
+
+    // A raycast against a collider component
+    bool RaycastCollider(const Ray3& ray, RaycastResult& outResult, const ColliderComponent& colliderComp);
+
+    // Gets closest static object raycast hit
+    bool RaycastStatic(const Ray3& ray, RaycastResult& outResult, const float rayLength);
+    bool RaycastDynamic(const Ray3& ray, RaycastResult& outResult, const float rayLength);
+
 
 private:
     // Octree helper methods (MIGHT NEED TO BE PUBLIC)
@@ -25,17 +44,20 @@ private:
     void removeOctreeNode(OctreeNode* node, Entity entity);
     void updateOctreeNode(OctreeNode* node, Entity entity);
     std::unordered_set<Entity> queryOctree(OctreeNode* node, const ColliderComponent& collider);
+    std::unordered_set<Entity> queryRayOctree(OctreeNode* node, const Ray3& ray, const float rayLength);
 
+    RaycastResult getClosestRaycast(const Ray3& ray, const float rayLength, const std::unordered_set<Entity>& ents_to_check);
 
     void transformColliders();
     void checkCollisions();
     bool isCollision(const ColliderComponent& colA, const ColliderComponent& colB);
+
     CollisionManifold getManifold(const ColliderComponent& colA, const ColliderComponent& colB);
+    CollisionManifold getClosestManifold(const ColliderComponent& collider, const std::unordered_set<Entity> ents_to_check);
 
     void solveConstraints(); // This is more of a physics thing
     void handleCollisions(); // This calls the OnCollision method of the collider (more specific collision)
 
-    // TODO: finish commented ones
     // Helper functions for collision detection
     static bool AABB_AABB(const ColliderComponent& col1, const ColliderComponent& col2);
     static bool AABB_OBB(const ColliderComponent& col1, const ColliderComponent& col2);
@@ -75,7 +97,7 @@ private:
     static bool MESH_TRIANGLE(const ColliderComponent& col1, const ColliderComponent& col2);
 
 
-    // TODO: fill in commented
+    // TODO: finish commented ones
     // Helper functions for collision response
     static CollisionManifold man_AABB_AABB(const ColliderComponent& col1, const ColliderComponent& col2);
     static CollisionManifold man_AABB_OBB(const ColliderComponent& col1, const ColliderComponent& col2);
@@ -114,6 +136,7 @@ private:
     // This notation is a function pointer with parameters ColliderComponent*
     using CollisionFunc = bool(*)(const ColliderComponent&, const ColliderComponent&);
     using ManifoldFunc = CollisionManifold(*)(const ColliderComponent&, const ColliderComponent&);
+    using RaycastFunc = bool(*)(const Ray3&, const ColliderComponent&);
 
     // This is a dispatch table pointing to collision functions
     CollisionFunc mCollisionTable[6][6];

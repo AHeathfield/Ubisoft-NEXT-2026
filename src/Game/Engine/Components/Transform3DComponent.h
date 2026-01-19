@@ -40,6 +40,11 @@ public:
 		mPosition = position;
 		mChanged = true;
 	}
+    void Translate(const Vector3& position)
+    {
+        mPosition += position;
+        mChanged = true;
+    }
 
 	Vector3 GetRotationDEG() const
 	{

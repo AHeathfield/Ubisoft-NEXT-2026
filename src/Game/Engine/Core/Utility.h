@@ -31,6 +31,8 @@ namespace utility
     float degToRad(float deg);
     float radToDeg(float rad);
 
+    float moveToward(const float from, const float to, const float delta);
+
     // Removes an element from a vector if it exists and shifts other indexes appropriately
     template <typename T>
     void vectorRemoveElement(std::vector<T>& v, const T& element)

@@ -1,6 +1,6 @@
-#include "RigidbodySystem.h"
+#include "RigidBodySystem.h"
 #include "../Core/GameManager.h"
-#include "../Components/RigidbodyComponent.h"
+#include "../Components/RigidBodyComponent.h"
 #include "../Components/Transform3DComponent.h"
 #include "../Components/ColliderComponent.h"
 #include <cmath>
@@ -8,7 +8,7 @@
 
 
 // Giving collider if any the correct physics response
-void RigidbodySystem::OnEntityAdded(Entity entity)
+void RigidBodySystem::OnEntityAdded(Entity entity)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
@@ -16,7 +16,7 @@ void RigidbodySystem::OnEntityAdded(Entity entity)
 	// There will also be a public function to set the physics response
 	if (coordinator.HasComponent<ColliderComponent>(entity))
 	{
-		utility::log("Giving rigidbody physicsresponse");
+		// utility::log("Giving rigidbody physicsresponse");
 		auto& col = coordinator.GetComponent<ColliderComponent>(entity);
 
 		col.physicsResponse = [this](Entity self, Entity other, const CollisionManifold& collision) {
@@ -27,24 +27,25 @@ void RigidbodySystem::OnEntityAdded(Entity entity)
 
 
 // If has collider, remove the physics response
-void RigidbodySystem::OnEntityRemoved(Entity entity)
+void RigidBodySystem::OnEntityRemoved(Entity entity)
 {
-	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
-	if (coordinator.HasComponent<ColliderComponent>(entity))
-	{
-		auto& col = coordinator.GetComponent<ColliderComponent>(entity);
-
-		col.physicsResponse = nullptr;
-	}
+	// Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+	// if (coordinator.HasComponent<ColliderComponent>(entity))
+	// {
+	// 	auto& col = coordinator.GetComponent<ColliderComponent>(entity);
+	//
+	// 	col.physicsResponse = nullptr;
+	// }
 }
 
-void RigidbodySystem::Update(float deltaTime)
+
+void RigidBodySystem::Update(float deltaTime)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	// Applying forces
 	for (const auto& entity : mEntities)
 	{
-		auto& rigidbody = coordinator.GetComponent<RigidbodyComponent>(entity);
+		auto& rigidbody = coordinator.GetComponent<RigidBodyComponent>(entity);
 
         if (rigidbody.isAwake)
             applyForces(rigidbody);
@@ -68,8 +69,8 @@ void RigidbodySystem::Update(float deltaTime)
 	for (int i = 0; i < size; i++)
 	{
 		ImpulseData impData = mImpulses[i];
-		auto& rbA = coordinator.GetComponent<RigidbodyComponent>(impData.entA);
-		auto& rbB = coordinator.GetComponent<RigidbodyComponent>(impData.entB);
+		auto& rbA = coordinator.GetComponent<RigidBodyComponent>(impData.entA);
+		auto& rbB = coordinator.GetComponent<RigidBodyComponent>(impData.entB);
 
 		float invMassA = rbA.GetInvMass();
 		float invMassB = rbB.GetInvMass();
@@ -114,7 +115,7 @@ void RigidbodySystem::Update(float deltaTime)
 	// Integrate position and velocity of every rigidbody
 	for (const auto& entity : mEntities)
 	{
-		auto& rigidbody = coordinator.GetComponent<RigidbodyComponent>(entity);
+		auto& rigidbody = coordinator.GetComponent<RigidBodyComponent>(entity);
 
         if (!rigidbody.isAwake)
         {
@@ -190,33 +191,32 @@ void RigidbodySystem::Update(float deltaTime)
 		}
 	}
 
-	
 	mImpulses.clear();
     mCollisions.clear();
 }
 
-Vector3 RigidbodySystem::GetGravity() const
+Vector3 RigidBodySystem::GetGravity() const
 {
 	return mGravity;
 }
 
-void RigidbodySystem::SetGravity(const Vector3& gravity)
+void RigidBodySystem::SetGravity(const Vector3& gravity)
 {
 	mGravity = gravity;
 }
 
-float RigidbodySystem::GetDamping() const
+float RigidBodySystem::GetDamping() const
 {
 	return mDamping;
 }
 
-void RigidbodySystem::SetDamping(float damping)
+void RigidBodySystem::SetDamping(float damping)
 {
 	mDamping = damping;
 }
 
 // Private methods
-void RigidbodySystem::applyForces(RigidbodyComponent& rb)
+void RigidBodySystem::applyForces(RigidBodyComponent& rb)
 {
 	rb.forces = mGravity * rb.mass;
 }
@@ -224,12 +224,12 @@ void RigidbodySystem::applyForces(RigidbodyComponent& rb)
 
 // Resolves the penetration of 2 objects
 // See https://physics.info/momentum/summary.shtml to understand how to derive magnitude of impulse
-void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
+void RigidBodySystem::applyImpulse(const ImpulseData& impData, int c)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-	auto& rbA = coordinator.GetComponent<RigidbodyComponent>(impData.entA);
-	auto& rbB = coordinator.GetComponent<RigidbodyComponent>(impData.entB);
+	auto& rbA = coordinator.GetComponent<RigidBodyComponent>(impData.entA);
+	auto& rbB = coordinator.GetComponent<RigidBodyComponent>(impData.entB);
 	auto& transformA = coordinator.GetComponent<Transform3DComponent>(impData.entA);
 	auto& transformB = coordinator.GetComponent<Transform3DComponent>(impData.entB);
 	bool hasCollider = coordinator.HasComponent<ColliderComponent>(impData.entA) && coordinator.HasComponent<ColliderComponent>(impData.entB);
@@ -251,7 +251,7 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	float invMass1 = rbA.GetInvMass();
 	float invMass2 = rbB.GetInvMass();
 	float invMassSum = invMass1 + invMass2;
-	if (CMP_FLOAT(invMassSum, 0))
+	if (CMP_FLOAT(invMassSum, 0.f))
 		return;
 
 	Vector3 r1, r2, relativeVel;
@@ -303,7 +303,7 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	// denominator = d1;
 
 	float j;
-	if (CMP_FLOAT(denominator, 0))
+	if (CMP_FLOAT(denominator, 0.f))
 		j = 0.f;
 	else
 		j = numerator / denominator;
@@ -351,7 +351,7 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	// denominator = d1;
 	
 	float jt;
-	if (CMP_FLOAT(denominator, 0))
+	if (CMP_FLOAT(denominator, 0.f))
 		jt = 0.f;
 	else
 		jt = numerator / denominator;
@@ -360,7 +360,7 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 	{
 		jt /= (float)impData.collision.contacts.size();
 	}
-	if (CMP_FLOAT(jt, 0))
+	if (CMP_FLOAT(jt, 0.f))
 		return;
 
 	// Clamping magnitude of friction between
@@ -405,7 +405,7 @@ void RigidbodySystem::applyImpulse(const ImpulseData& impData, int c)
 }
 
 
-void RigidbodySystem::addRotationalImpulse(Entity ent, const Vector3& point, const Vector3& impulse)
+void RigidBodySystem::addRotationalImpulse(Entity ent, const Vector3& point, const Vector3& impulse)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	if (coordinator.HasComponent<ColliderComponent>(ent) == false)
@@ -413,7 +413,7 @@ void RigidbodySystem::addRotationalImpulse(Entity ent, const Vector3& point, con
 
 	const auto& transform = coordinator.GetComponent<Transform3DComponent>(ent);
 	const auto& collider = coordinator.GetComponent<ColliderComponent>(ent);
-	auto& rb = coordinator.GetComponent<RigidbodyComponent>(ent);
+	auto& rb = coordinator.GetComponent<RigidBodyComponent>(ent);
 
 	if (rb.mass == 0.f)
 		return;
@@ -426,12 +426,17 @@ void RigidbodySystem::addRotationalImpulse(Entity ent, const Vector3& point, con
 	rb.angularVelocity = rb.angularVelocity + angAccel;
 }
 
+
 // Just creates the Impulse data to be applied during the update phase
-void RigidbodySystem::physicsResponse(Entity self, Entity other, const CollisionManifold& collision)
+// TODO: Add impulse data if colliding with character body (only rb should be effected!)
+void RigidBodySystem::physicsResponse(Entity self, Entity other, const CollisionManifold& collision)
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
-	// self is guaranteed to have rigidbody but other may just have a collider!
-	if (coordinator.HasComponent<RigidbodyComponent>(other))
+    
+    if (!coordinator.HasComponent<RigidBodyComponent>(self))
+        return;
+
+	if (coordinator.HasComponent<RigidBodyComponent>(other))
 	{
 		if (collision.isColliding)
 		{
@@ -448,7 +453,7 @@ void RigidbodySystem::physicsResponse(Entity self, Entity other, const Collision
 }
 
 
-bool RigidbodySystem::shouldSleep(RigidbodyComponent& rb) const
+bool RigidBodySystem::shouldSleep(RigidBodyComponent& rb) const
 {
     return (rb.velocity.GetMagnitudeSquared() < rb.sleepVelocityThreshold*rb.sleepVelocityThreshold && rb.angularVelocity.GetMagnitudeSquared() < rb.sleepAngularVelocityThreshold*rb.sleepAngularVelocityThreshold);// && rb.sleepTimer.IsFinished())
 }
