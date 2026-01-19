@@ -177,6 +177,11 @@ void PlayerScene::Update(const float deltaTime)
 }
 
 
+Vector3 PlayerScene::GetPlayerPosition() const
+{
+    return GameManager::Instance().GetCoordinator().GetComponent<Transform3DComponent>(mPlayer).GetPosition();
+}
+
 
 
 void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionManifold& collision)

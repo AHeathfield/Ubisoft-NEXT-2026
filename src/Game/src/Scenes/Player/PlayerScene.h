@@ -14,6 +14,8 @@ public:
     // void Exit() override;
     void Update(const float deltaTime) override;
     // void Render() override;
+    
+    Vector3 GetPlayerPosition() const;
 
 private:
     void onCollisionEnter(Entity self, Entity other, const CollisionManifold& collision);

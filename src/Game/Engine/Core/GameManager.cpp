@@ -194,6 +194,20 @@ void GameManager::ChangeScenePosition(const std::string& name, int newStackPos)
 }
 
 
+Scene* GameManager::GetScene(const std::string& name)
+{
+    if (utility::hasKey(mScenes, name))
+    {
+        return mScenes[name].get();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+
+
 // NOTE: You cannot add a scene thats name already is taken
 void GameManager::AddScene(const std::string& name, std::unique_ptr<Scene> scene, int stackPos)
 {

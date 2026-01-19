@@ -37,6 +37,7 @@ public:
     void ChangeSystemPosition(std::shared_ptr<System> system, int newStackPos);
 
     // Scene management methods
+    Scene* GetScene(const std::string& name);
     void AddScene(const std::string& name, std::unique_ptr<Scene> scene, int stackPos = -1);
     void RemoveScene(const std::string& name);
     void PauseScene(const std::string& name);
