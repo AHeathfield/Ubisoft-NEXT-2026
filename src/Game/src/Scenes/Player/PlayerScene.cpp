@@ -90,6 +90,7 @@ void PlayerScene::Update(const float deltaTime)
 {
     mMovedXZ = false;
     mInputDir = Vector3(0.f, 0.f, 0.f);
+    mInputDirCam = Vector3(0.f, 0.f, 0.f);
 
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
@@ -122,12 +123,34 @@ void PlayerScene::Update(const float deltaTime)
 	}
 
 
-	// If I wanted to implement something like like a lean in siege thats when you use z "roll"
+
+    // Camera controls
     Vector3 rotation = transform.GetRotationRAD();
-	rotation.x += mouseMovement.x * _SENS * deltaTime;
-	rotation.y += mouseMovement.y * _SENS * deltaTime;
+
+    if (App::IsKeyPressed(App::KEY_LEFT))
+        rotation.x += 1.f * _SENS * deltaTime;
+	if (App::IsKeyPressed(App::KEY_RIGHT))
+        rotation.x += -1.f * _SENS * deltaTime;
+	if (App::IsKeyPressed(App::KEY_UP))
+        rotation.y += -1.f * _SENS * deltaTime;
+	if (App::IsKeyPressed(App::KEY_DOWN))
+        rotation.y += 1.f * _SENS * deltaTime;
+
+
+    // Clamp pitch
+    const float maxPitch = utility::degToRad(89.0f);
+    rotation.y = std::clamp(rotation.y, -maxPitch, maxPitch);
+
     transform.SetRotationRAD(rotation);
     mCamera->SetTransform(transform);
+
+
+
+	// If I wanted to implement something like like a lean in siege thats when you use z "roll"
+	// rotation.x += mouseMovement.x * _SENS * deltaTime;
+	// rotation.y += mouseMovement.y * _SENS * deltaTime;
+	//    transform.SetRotationRAD(rotation);
+    // mCamera->SetTransform(transform);
 
     // Getting the input direction
 	if (App::IsKeyPressed(App::KEY_A))
@@ -139,7 +162,7 @@ void PlayerScene::Update(const float deltaTime)
 	if (App::IsKeyPressed(App::KEY_S))
         moveBackward();
 
-    if (mMovedXZ && mInputDir.GetMagnitudeSquared())
+    if (mMovedXZ && mInputDir.GetMagnitudeSquared() > 0.f)
     {
         Vector3 newVel = mInputDir.GetNormal() * _SPEED;
         character.velocity.x = newVel.x;
@@ -299,7 +322,7 @@ void PlayerScene::throwBall()
     );
     coordinator.AddComponent(
 	    ball,
-	    RigidBodyComponent{}
+	    RigidBodyComponent{.mass = 1.f}
     );
     coordinator.AddComponent(
 	    ball,

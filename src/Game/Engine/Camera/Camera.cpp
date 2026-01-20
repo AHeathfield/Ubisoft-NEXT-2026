@@ -21,11 +21,32 @@ Camera::Camera(const float fov_degrees, const float aspect_ratio, const float ne
 
 Vector3 Camera::GetLookDirection() const
 {
-    Mat4x4 matCameraRotX = Mat4x4::RotationX(-mTransform.GetRotationRAD().y);
-    Mat4x4 matCameraRotY = Mat4x4::RotationY(-mTransform.GetRotationRAD().x);
-    // Mat4x4 matCameraRotZ = Mat4x4::RotationZ(mTransform.GetRotationRAD().x);
-    Mat4x4 matCameraRot = matCameraRotY * matCameraRotX;// * matCameraRotZ;
-    return matCameraRot.GetMultiplyVector3(Vector3::FORWARD);
+//     Mat4x4 matCameraRotX = Mat4x4::RotationX(-mTransform.GetRotationRAD().y);
+//     Mat4x4 matCameraRotY = Mat4x4::RotationY(-mTransform.GetRotationRAD().x);
+//     // Mat4x4 matCameraRotZ = Mat4x4::RotationZ(mTransform.GetRotationRAD().x);
+//     Mat4x4 matCameraRot = matCameraRotY * matCameraRotX;// * matCameraRotZ;
+//     return matCameraRot.GetMultiplyVector3(Vector3::FORWARD);
+
+    // Vector3 rotation = mTransform.GetRotationRAD();
+    //
+    // Mat4x4 yaw   = Mat4x4::RotationY(rotation.y);
+    // Mat4x4 pitch = Mat4x4::RotationX(rotation.x);
+    //
+    // // Yaw first, then pitch in yawed space
+    // Mat4x4 cameraRot = yaw * pitch;
+    //
+    // return cameraRot.GetMultiplyVector3(Vector3::FORWARD).GetNormal();
+    Vector3 rot = mTransform.GetRotationRAD();
+
+    float yaw   = rot.x;
+    float pitch = rot.y;
+
+    Vector3 forward;
+    forward.x = cosf(pitch) * sinf(yaw);
+    forward.y = sinf(pitch);
+    forward.z = cosf(pitch) * cosf(yaw);
+
+    return forward.GetNormal();
 }
 
 void Camera::UpdateProjection()
