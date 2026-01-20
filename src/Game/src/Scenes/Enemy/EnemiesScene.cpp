@@ -76,7 +76,7 @@ void EnemiesScene::Enter()
     // );
     //
     // Creating spawners around the map
-    createSpawner(Vector3(0.f, 10.f, 20.f), 1.0f);
+    createSpawner(Vector3(0.f, 0.f, 30.f), 1.0f);
 
 
     // coordinator.AddComponent(
@@ -139,8 +139,9 @@ void EnemiesScene::createSpawner(const Vector3& position, const float spawn_time
 	    TimerComponent{
             .timer = Timer(false, spawn_time),
             .isLooping = true,
-            .onTimerEnd = [this, &position](Entity self) {
-                    this->spawnEnemy(position);
+            .onTimerEnd = [this](Entity self) {
+                    Vector3 pos = GameManager::Instance().GetCoordinator().GetComponent<Transform3DComponent>(self).GetPosition();
+                    this->spawnEnemy(pos);
 				}
         }
     );
