@@ -7,9 +7,9 @@
 void TimerSystem::Update(float deltaTime)
 {
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    // utility::log("Timer system worked!");
 
     std::set<Entity> temp = mEntities;
-    // utility::log("timer ents: " + std::to_string(temp.size()));
     for (const auto& entity : temp)
     {
         auto& timer = coordinator.GetComponent<TimerComponent>(entity);
@@ -38,5 +38,4 @@ void TimerSystem::Update(float deltaTime)
         }
     }
 
-    // utility::log("Timer system worked!");
 }

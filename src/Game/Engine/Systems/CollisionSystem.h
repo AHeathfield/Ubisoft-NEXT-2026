@@ -149,6 +149,7 @@ private:
     OctreeNode* mStaticOctree; // Only updated when entities are added (with colliders)
     OctreeNode* mDynamicOctree; // Checks for updates every frame and updates whenever a transform changes
 
+    std::unordered_set<Entity> mDeleted;
     std::unordered_map<Entity, std::unordered_set<Entity>> mCollisions;
     std::vector<ExitingPair> mExitings;
 };

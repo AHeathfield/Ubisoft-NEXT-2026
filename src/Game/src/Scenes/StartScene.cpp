@@ -70,30 +70,30 @@ void StartScene::Enter()
 	    )
     );
 
-    mZombie = CreateEntity();
-    coordinator.AddComponent(
-	    mZombie,
-	    MeshComponent("./data/Objects/zombie.obj", Color(0, 155, 155))
-    );
-    coordinator.AddComponent(
-	    mZombie,
-	    Transform3DComponent(
-		Vector3(0.f, 0.f, 20.f),
-		Vector3(0, 0, 180.f),
-		Vector3(0.5f, 0.5f, 0.5f)
-	    )
-    );
-    // coordinator.AddComponent(
-    // 		mZombie,
-    // 		RigidBodyComponent{}
-    // );
-    coordinator.AddComponent(
-	    mZombie,
-	    ColliderComponent(
-		ColliderType::DYNAMIC,
-		coordinator.GetComponent<MeshComponent>(mZombie).mesh
-	    )
-    );
+		//   mZombie = CreateEntity();
+		//   coordinator.AddComponent(
+		//    mZombie,
+		//    MeshComponent("./data/Objects/zombie.obj", Color(0, 155, 155))
+		//   );
+		//   coordinator.AddComponent(
+		//    mZombie,
+		//    Transform3DComponent(
+		// Vector3(0.f, 0.f, 20.f),
+		// Vector3(0, 0, 180.f),
+		// Vector3(0.5f, 0.5f, 0.5f)
+		//    )
+		//   );
+		//   // coordinator.AddComponent(
+		//   // 		mZombie,
+		//   // 		RigidBodyComponent{}
+		//   // );
+		//   coordinator.AddComponent(
+		//    mZombie,
+		//    ColliderComponent(
+		// ColliderType::DYNAMIC,
+		// coordinator.GetComponent<MeshComponent>(mZombie).mesh
+		//    )
+		//   );
 
     mFloor = CreateEntity();
     coordinator.AddComponent(
@@ -204,8 +204,8 @@ void StartScene::Update(float deltaTime)
 
     // const auto& transform = coordinator.GetComponent<Transform3DComponent>(mCube);
     // utility::log(transform.GetPosition().GetString());
-    auto& transformTest = coordinator.GetComponent<Transform3DComponent>(mZombie);
-    transformTest.SetPosition(transformTest.GetPosition() + Vector3(0, 0.1f, 0));
+    // auto& transformTest = coordinator.GetComponent<Transform3DComponent>(mZombie);
+    // transformTest.SetPosition(transformTest.GetPosition() + Vector3(0, 0.1f, 0));
 
     // auto& bird_sprite = coordinator.GetComponent<SpriteComponent>(mBird);
     // if (App::IsKeyPressed(App::KEY_P))

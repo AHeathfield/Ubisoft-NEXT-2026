@@ -12,7 +12,8 @@ void EnemySystem::Update(float deltaTime)
     Vector3 playerPos = playerScene->GetPlayerPosition();
     float speed = 8.f;
 
-    for (const auto& ent : mEntities)
+    std::set<Entity> ents_to_check = mEntities;
+    for (const auto& ent : ents_to_check)
     {
         auto& enemyTransform = coordinator.GetComponent<Transform3DComponent>(ent);
         auto& enemyRB = coordinator.GetComponent<RigidBodyComponent>(ent);
@@ -21,5 +22,10 @@ void EnemySystem::Update(float deltaTime)
         // Move towards player
         enemyRB.velocity += dir * speed * deltaTime;
         // enemyRB.velocity.y -= 2.f * deltaTime;
+
+        if (enemyTransform.GetPosition().y > _KILLY)
+        {
+            coordinator.DestroyEntity(ent);
+        }
     }
 }

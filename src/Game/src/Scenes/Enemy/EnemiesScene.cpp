@@ -31,7 +31,6 @@ void EnemiesScene::Enter()
     	mEnemy,
     	MeshComponent("./data/Objects/cube.obj", Color(255, 0, 0))
     );
-    utility::log("test");
     coordinator.AddComponent(
     	mEnemy,
     	Transform3DComponent(
@@ -54,9 +53,30 @@ void EnemiesScene::Enter()
 	    )
     );
 
-
+    // mKillzone = CreateEntity();
+    // coordinator.AddComponent(
+    // 	mKillzone,
+    // 	Transform3DComponent(
+    //         Vector3(0, 20.f, 0),
+    //         Vector3(0.f, 0.f, 0.f),
+    //         Vector3(100.f, 20.f, 100.f)
+    //     )
+    // );
+    // coordinator.AddComponent(
+    //  mKillzone,
+    //     ColliderComponent(
+    //         ColliderType::DYNAMIC,
+    //         ShapeType::AABB_3D,
+    //         [this](Entity self, Entity other, const CollisionManifold& collision) {
+    //             this->onKillZoneEnter(other);
+    //         },
+    //         nullptr,
+    //         nullptr
+    //     )
+    // );
+    //
     // Creating spawners around the map
-    createSpawner(Vector3(0.f, 10.f, 20.f), 1.f);
+    createSpawner(Vector3(0.f, 10.f, 20.f), 1.0f);
 
 
     // coordinator.AddComponent(
@@ -95,19 +115,6 @@ void EnemiesScene::Enter()
 
 void EnemiesScene::Update(float deltaTime)
 {
-    // GameManager& gm = GameManager::Instance();
-    // Coordinator& coordinator = gm.GetCoordinator();
-    //
-    // auto& enemyTransform = coordinator.GetComponent<Transform3DComponent>(mEnemy);
-    // auto& enemyRB = coordinator.GetComponent<RigidBodyComponent>(mEnemy);
-    // auto* playerScene =  static_cast<PlayerScene*>(gm.GetScene("PlayerScene"));
-    //
-    // Vector3 playerPos = playerScene->GetPlayerPosition();
-    // float speed = 8.f;
-    //
-    // // Move towards player
-    // Vector3 dir = (playerPos - enemyTransform.GetPosition()).GetNormal();
-    // enemyRB.velocity += dir * speed * deltaTime;
 }
 
 
@@ -174,6 +181,11 @@ void EnemiesScene::spawnEnemy(const Vector3& position)
             ShapeType::OBB_3D
 	    )
     );
+}
 
 
+void EnemiesScene::onKillZoneEnter(Entity other)
+{
+    utility::log("killing");
+    GameManager::Instance().GetCoordinator().DestroyEntity(other);
 }

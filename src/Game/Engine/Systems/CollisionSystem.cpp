@@ -353,6 +353,8 @@ void CollisionSystem::Update(float deltaTime)
 		render_sys->DrawMesh(mesh_aabb, transform);
 	}
 #endif
+
+    mDeleted.clear();
 }
 
 
@@ -398,16 +400,17 @@ void CollisionSystem::OnEntityRemoved(Entity entity)
 		switch (collider.colliderType)
 		{
 			case ColliderType::STATIC:
-				mStaticEntities.erase(entity);
 				removeOctreeNode(mStaticOctree, entity);
 				break;
 			case ColliderType::DYNAMIC:
-				mDynamicEntities.erase(entity);
 				removeOctreeNode(mDynamicOctree, entity);
 				break;
 		}
 	}
 
+    mStaticEntities.erase(entity);
+    mDynamicEntities.erase(entity);
+    mDeleted.insert(entity);
 }
 
 
@@ -941,6 +944,11 @@ void CollisionSystem::handleCollisions()
 	{
 		Entity entA = mExitings[i].entA;
 		Entity entB = mExitings[i].entB;
+
+        if (utility::containsValue(mDeleted, entA) || utility::containsValue(mDeleted, entB))
+            continue;
+
+
 		auto& colA = coordinator.GetComponent<ColliderComponent>(entA);
 
 		if (colA.onCollisionExit)
@@ -955,7 +963,11 @@ void CollisionSystem::handleCollisions()
 	// New and recurring collisions
 	for (auto it = mCollisions.begin(); it != mCollisions.end(); it++)
 	{
+
 		Entity entA = it->first;
+        if (utility::containsValue(mDeleted, entA))
+            continue;
+
 		auto& colA = coordinator.GetComponent<ColliderComponent>(entA);
 
 		if (!colA.isActive)
@@ -963,6 +975,9 @@ void CollisionSystem::handleCollisions()
 			
 		for (const auto& entB : it->second)
 		{
+            if (utility::containsValue(mDeleted, entB))
+                continue;
+
 			auto& colB = coordinator.GetComponent<ColliderComponent>(entB);
 
 			if (!colB.isActive)

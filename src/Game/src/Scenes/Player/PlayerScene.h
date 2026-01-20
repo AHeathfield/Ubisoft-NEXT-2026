@@ -5,6 +5,7 @@
 #include "../../../Engine/Physics/CollisionManifold.h"
 #include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Camera/Camera.h"
+#include "../../../Engine/Core/Timer.h"
 #include <memory>
 
 class PlayerScene : public Scene
@@ -39,20 +40,22 @@ private:
 
 private:
     static constexpr float _SPEED = 8.0f;
-    static constexpr float _JUMP = 150.f;
+    static constexpr float _JUMP = 200.f;
     static constexpr float _GRAVITY = 15.f;
-    static constexpr float _SENS = 5.f;
+    static constexpr float _SENS = 3.f;
     static constexpr float _EPS = 0.00000001f;
-    static constexpr float _THROW_STRENGTH = 50.f;
+    static constexpr float _THROW_STRENGTH = 100.f;
+    static constexpr float _THROW_COOLDOWN = 0.1f;
 
 private:
+    Timer mThrowCooldown;
     Entity mPlayer = -1;
     std::shared_ptr<Camera> mCamera = nullptr;
-    Vector2 mPrevMousePos = Vector2();
+    // Vector2 mPrevMousePos = Vector2();
 
     Vector3 mInputDir = Vector3();
-    Vector3 mInputDirCam = Vector3();
-    bool mCursorHasBeenMoved = false;
+    // Vector3 mInputDirCam = Vector3();
+    // bool mCursorHasBeenMoved = false;
     bool mIsColliding = false;
     bool mMovedXZ = false;
 };

@@ -38,7 +38,7 @@ void PlayerScene::Enter()
 	coordinator.AddComponent(
 		mPlayer,
 		Transform3DComponent(
-            Vector3(0, 5.f, 5.f),
+            Vector3(0, 3.f, 5.f),
             Vector3(),
             Vector3(1.f, 1.f, 1.f)
         )
@@ -77,12 +77,16 @@ void PlayerScene::Enter()
     // mCamera->UpdateProjection();
 
 	// Initial prev mouse pos to middle (I think the virtual stuff through it off, ideally there is a way to remove the cursor lol)
-	mPrevMousePos.x = APP_VIRTUAL_WIDTH / 2.f;
-	mPrevMousePos.y = APP_VIRTUAL_HEIGHT / 2.f;
+	// mPrevMousePos.x = APP_VIRTUAL_WIDTH / 2.f;
+	// mPrevMousePos.y = APP_VIRTUAL_HEIGHT / 2.f;
 	// APP_VIRTUAL_TO_NATIVE_COORDS(mPrevMousePos.x, mPrevMousePos.y)
 
 	// Setting the render camera to the player camera
 	coordinator.GetSystem<Render3DSystem>()->SetCamera(mCamera);
+
+
+    // Setting the timers
+    mThrowCooldown = Timer(false, _THROW_COOLDOWN);
 }
 
 
@@ -90,7 +94,9 @@ void PlayerScene::Update(const float deltaTime)
 {
     mMovedXZ = false;
     mInputDir = Vector3(0.f, 0.f, 0.f);
-    mInputDirCam = Vector3(0.f, 0.f, 0.f);
+
+    // Updating timers
+    mThrowCooldown.Increment(deltaTime);
 
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
@@ -103,24 +109,24 @@ void PlayerScene::Update(const float deltaTime)
     if (!character.isOnFloor)
         character.velocity = character.upDirection *  -1.f * _GRAVITY;
 
-	Vector2 newMousePos, mouseMovement;
-	App::GetMousePos(newMousePos.x, newMousePos.y);
-	mouseMovement = newMousePos - mPrevMousePos;
+	// Vector2 newMousePos, mouseMovement;
+	// App::GetMousePos(newMousePos.x, newMousePos.y);
+	// mouseMovement = newMousePos - mPrevMousePos;
 
 	// If theres no cursor movement the coordinates are 0, 0
 	// I want the default coordinates to be the center of the screen this just ensures that
-	if (mCursorHasBeenMoved)
-	{
-		mPrevMousePos = newMousePos;
-	}
-	else
-	{
-		if (newMousePos.equals(Vector2(0,0)) == false)
-		{
-			mCursorHasBeenMoved = true;
-		}
-		mouseMovement.zero();
-	}
+	// if (mCursorHasBeenMoved)
+	// {
+	// 	mPrevMousePos = newMousePos;
+	// }
+	// else
+	// {
+	// 	if (newMousePos.equals(Vector2(0,0)) == false)
+	// 	{
+	// 		mCursorHasBeenMoved = true;
+	// 	}
+	// 	mouseMovement.zero();
+	// }
 
 
 
@@ -172,7 +178,7 @@ void PlayerScene::Update(const float deltaTime)
         moveToRest(character);
 
     // Jump
-    if (App::IsKeyPressed(App::KEY_SPACE) && character.isOnFloor)
+    if (App::IsKeyPressed(App::KEY_V) && character.isOnFloor)
         jump(character, _JUMP);
 
 
@@ -186,10 +192,14 @@ void PlayerScene::Update(const float deltaTime)
 
 	// Sound test
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
-	if (App::IsMousePressed(GLUT_LEFT_BUTTON))
+	if (App::IsMousePressed(GLUT_LEFT_BUTTON) || App::IsKeyPressed(App::KEY_SPACE))
     {
-		audio.Restart("Shoot");
-        throwBall();
+        if (mThrowCooldown.IsFinished())
+        {
+            audio.Restart("Shoot");
+            throwBall();
+            mThrowCooldown.Reset();
+        }
     }
 
 

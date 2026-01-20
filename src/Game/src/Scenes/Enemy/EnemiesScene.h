@@ -15,8 +15,9 @@ public:
 private:
     void createSpawner(const Vector3& position, const float spawn_time);
     void spawnEnemy(const Vector3& position);
+    void onKillZoneEnter(Entity other);
 
 private:
-    std::vector<Entity> mSpawners;
     Entity mEnemy = -1;
+    // Entity mKillzone = -1;
 };
