@@ -1,4 +1,6 @@
 #include "PlayerScene.h"
+#include "../../Components/PlayerComponent.h"
+#include "../../Components/EnemyComponent.h"
 #include "../../../Engine/Core/GameManager.h"
 #include "../../../Engine/Systems/Render3DSystem.h"
 #include "../../../../ContestAPI/app.h"
@@ -10,8 +12,6 @@
 #include "../../../Engine/Components/RigidBodyComponent.h"
 #include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
-#include "../../Components/TestComponent.h"
-#include "../../Systems/TestSystem.h"
 #include <memory>
 #include <string>
 // #include "../../../Engine/src/Components/MeshComponent.h"
@@ -21,24 +21,23 @@ void PlayerScene::Enter()
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-	// THIS IS TEMPORARY JUST FOR TESTING
-	coordinator.RegisterComponent<TestComponent>();
+    coordinator.RegisterComponent<PlayerComponent>();
 
-	auto testSystem = coordinator.RegisterSystem<TestSystem>();
-{
-		Signature signature;
-		signature.set(coordinator.GetComponentType<TestComponent>());
-		coordinator.SetSystemSignature<TestSystem>(signature);
-	}
-	GameManager::Instance().AddSystem(testSystem);
+
+// 	auto testSystem = coordinator.RegisterSystem<TestSystem>();
+// {
+// 		Signature signature;
+// 		signature.set(coordinator.GetComponentType<TestComponent>());
+// 		coordinator.SetSystemSignature<TestSystem>(signature);
+// 	}
+// 	GameManager::Instance().AddSystem(testSystem);
 
 
 	mPlayer = CreateEntity();
-	coordinator.AddComponent(mPlayer, TestComponent{});
 	coordinator.AddComponent(
 		mPlayer,
 		Transform3DComponent(
-            Vector3(0, 3.f, 5.f),
+            Vector3(0, 3.f, 0.f),
             Vector3(),
             Vector3(1.f, 1.f, 1.f)
         )
@@ -61,6 +60,9 @@ void PlayerScene::Enter()
 	);
 	coordinator.AddComponent(
 			mPlayer, CharacterBodyComponent()
+	);
+	coordinator.AddComponent(
+			mPlayer, PlayerComponent{}
 	);
 	coordinator.AddComponent(
 			mPlayer, AudioComponent{}
@@ -108,6 +110,7 @@ void PlayerScene::Update(const float deltaTime)
     // Applying custom gravity
     if (!character.isOnFloor)
         character.velocity = character.upDirection *  -1.f * _GRAVITY;
+
 
 	// Vector2 newMousePos, mouseMovement;
 	// App::GetMousePos(newMousePos.x, newMousePos.y);
@@ -219,8 +222,18 @@ Vector3 PlayerScene::GetPlayerPosition() const
 
 void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionManifold& collision)
 {
-	utility::log("Enter");
-	mIsColliding = true;
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    // utility::log("test");
+    // Enemy "Explodes"
+    if (coordinator.HasComponent<EnemyComponent>(other))
+    {
+        utility::log("Explode");
+        coordinator.DestroyEntity(other);
+    }
+
+    // Need to deduct life
+
 }
 
 
@@ -233,7 +246,6 @@ void PlayerScene::onCollisionStay(Entity self, Entity other, const CollisionMani
 void PlayerScene::onCollisionExit(Entity self, Entity other)
 {
 	utility::log("Exit");
-	mIsColliding = false;
 }
 
 

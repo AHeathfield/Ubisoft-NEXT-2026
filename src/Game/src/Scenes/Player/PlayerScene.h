@@ -56,6 +56,5 @@ private:
     Vector3 mInputDir = Vector3();
     // Vector3 mInputDirCam = Vector3();
     // bool mCursorHasBeenMoved = false;
-    bool mIsColliding = false;
     bool mMovedXZ = false;
 };

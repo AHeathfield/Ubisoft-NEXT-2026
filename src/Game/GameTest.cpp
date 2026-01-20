@@ -3,6 +3,7 @@
 // Provides a demo of how to use the API
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "Engine/Core/ECS.h"
 #if BUILD_PLATFORM_WINDOWS
 //------------------------------------------------------------------------
 #include <windows.h> 
@@ -13,13 +14,8 @@
 #include "../ContestAPI/app.h"
 #include "Engine/Core/GameManager.h"
 #include "src/Scenes/StartScene.h"
-#include "src/Scenes/Player/PlayerScene.h"
 #include "Engine/Core/Utility.h"
 #include "config.h"
-
-// Global variables
-// Coordinator gCoordinator;
-// GameManager gGameManager;
 
 
 //------------------------------------------------------------------------
@@ -28,10 +24,9 @@
 void Init()
 {
     GameManager::Instance().Start();
+
+	
 	GameManager::Instance().AddScene("StartScene", std::make_unique<StartScene>());
-	// gCoordinator.Init();
-	// gGameManager.Start();
-	// gGameManager.AddScene("StartScene", std::make_unique<StartScene>());
 }
 
 //------------------------------------------------------------------------

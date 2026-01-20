@@ -9,6 +9,9 @@
 #include "../../Engine/Components/Transform2DComponent.h"
 #include "../../Engine/Components/SpriteComponent.h"
 #include "../../Engine/Systems/Render3DSystem.h"
+#include "../Components/PlayerComponent.h"
+#include "../Components/EnemyComponent.h"
+#include "../Systems/EnemySystem.h"
 #include <cstdint>
 #include <memory>
 

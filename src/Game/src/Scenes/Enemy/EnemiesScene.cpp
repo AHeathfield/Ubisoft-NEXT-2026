@@ -1,6 +1,7 @@
 #include "EnemiesScene.h"
 #include "../Player/PlayerScene.h"
 #include "../../Components/EnemyComponent.h"
+#include "../../Components/PlayerComponent.h"
 #include "../../Systems/EnemySystem.h"
 #include "../../../Engine/Core/GameManager.h"
 #include "../../../Engine/Components/MeshComponent.h"
@@ -14,8 +15,9 @@ void EnemiesScene::Enter()
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
     // Registering the EnemySystem
+
     coordinator.RegisterComponent<EnemyComponent>();
-	auto enemySys = coordinator.RegisterSystem<EnemySystem>();
+    auto enemySys = coordinator.RegisterSystem<EnemySystem>();
 {
 		Signature signature;
 		signature.set(coordinator.GetComponentType<EnemyComponent>());
@@ -24,6 +26,7 @@ void EnemiesScene::Enter()
 		coordinator.SetSystemSignature<EnemySystem>(signature);
 	}
 	GameManager::Instance().AddSystem(enemySys);
+
 
 
     mEnemy = CreateEntity();
@@ -182,11 +185,23 @@ void EnemiesScene::spawnEnemy(const Vector3& position)
             ShapeType::OBB_3D
 	    )
     );
+
+    auto& coll = coordinator.GetComponent<ColliderComponent>(enemy);
+
+    coll.onCollisionEnter = [this](Entity self, Entity other, const CollisionManifold& collision) {
+        this->onPlayerEnter(self, other);
+    };
 }
 
 
-void EnemiesScene::onKillZoneEnter(Entity other)
+void EnemiesScene::onPlayerEnter(Entity self, Entity other)
 {
-    utility::log("killing");
-    GameManager::Instance().GetCoordinator().DestroyEntity(other);
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+
+    if (coordinator.HasComponent<PlayerComponent>(other))
+    {
+        coordinator.DestroyEntity(self);
+    }
+
+    // Maybe call something on the players end??
 }
