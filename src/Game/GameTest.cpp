@@ -14,8 +14,13 @@
 #include "../ContestAPI/app.h"
 #include "Engine/Core/GameManager.h"
 #include "src/Scenes/StartScene.h"
+#include "src/Scenes/Player/PlayerScene.h"
 #include "Engine/Core/Utility.h"
+#include "Engine/Components/RigidBodyComponent.h"
 #include "config.h"
+#include "src/Components/EnemyComponent.h"
+#include "src/Components/PlayerComponent.h"
+#include "src/Systems/EnemySystem.h"
 
 
 //------------------------------------------------------------------------
@@ -24,8 +29,22 @@
 void Init()
 {
     GameManager::Instance().Start();
+    Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-	
+    // Registering user defined components and systems
+    coordinator.RegisterComponent<PlayerComponent>();
+    coordinator.RegisterComponent<EnemyComponent>();
+	auto enemySys = coordinator.RegisterSystem<EnemySystem>();
+{
+		Signature signature;
+		signature.set(coordinator.GetComponentType<EnemyComponent>());
+		signature.set(coordinator.GetComponentType<Transform3DComponent>());
+		signature.set(coordinator.GetComponentType<RigidBodyComponent>());
+		coordinator.SetSystemSignature<EnemySystem>(signature);
+	}
+	GameManager::Instance().AddSystem(enemySys);
+
+
 	GameManager::Instance().AddScene("StartScene", std::make_unique<StartScene>());
 }
 

@@ -48,30 +48,30 @@ void StartScene::Enter()
     // );
 
 
-    mSphere = CreateEntity();
-    coordinator.AddComponent(
-    	mSphere,
-    	MeshComponent("./data/Objects/sphere.obj", Color(0, 255, 0))
-    );
-    coordinator.AddComponent(
-    	mSphere,
-    	Transform3DComponent(
-            Vector3(0.5f, 5.f, 10.f),
-            Vector3(0, 0, 0),
-            Vector3(1.f, 1.f, 1.f)
-    	)
-    );
-    coordinator.AddComponent(
-	    mSphere,
-	    RigidBodyComponent{}
-    );
-    coordinator.AddComponent(
-	    mSphere,
-	    ColliderComponent(
-            ColliderType::DYNAMIC,
-            ShapeType::SPHERE_3D
-	    )
-    );
+    // mSphere = CreateEntity();
+    // coordinator.AddComponent(
+    // 	mSphere,
+    // 	MeshComponent("./data/Objects/sphere.obj", Color(0, 255, 0))
+    // );
+    // coordinator.AddComponent(
+    // 	mSphere,
+    // 	Transform3DComponent(
+    //         Vector3(0.5f, 5.f, 10.f),
+    //         Vector3(0, 0, 0),
+    //         Vector3(1.f, 1.f, 1.f)
+    // 	)
+    // );
+    // coordinator.AddComponent(
+    //  mSphere,
+    //  RigidBodyComponent{}
+    // );
+    // coordinator.AddComponent(
+    //  mSphere,
+    //  ColliderComponent(
+    //         ColliderType::DYNAMIC,
+    //         ShapeType::SPHERE_3D
+    //  )
+    // );
 
 		//   mZombie = CreateEntity();
 		//   coordinator.AddComponent(

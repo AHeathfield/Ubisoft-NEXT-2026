@@ -14,20 +14,6 @@ void EnemiesScene::Enter()
 {
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-    // Registering the EnemySystem
-
-    coordinator.RegisterComponent<EnemyComponent>();
-    auto enemySys = coordinator.RegisterSystem<EnemySystem>();
-{
-		Signature signature;
-		signature.set(coordinator.GetComponentType<EnemyComponent>());
-		signature.set(coordinator.GetComponentType<Transform3DComponent>());
-		signature.set(coordinator.GetComponentType<RigidBodyComponent>());
-		coordinator.SetSystemSignature<EnemySystem>(signature);
-	}
-	GameManager::Instance().AddSystem(enemySys);
-
-
 
     mEnemy = CreateEntity();
     coordinator.AddComponent(
@@ -80,6 +66,9 @@ void EnemiesScene::Enter()
     //
     // Creating spawners around the map
     createSpawner(Vector3(0.f, 0.f, 30.f), 1.0f);
+    createSpawner(Vector3(30.f, 0.f, 30.f), 1.0f);
+    createSpawner(Vector3(-30.f, 0.f, 30.f), 1.0f);
+    createSpawner(Vector3(0.f, 0.f, -30.f), 1.0f);
 
 
     // coordinator.AddComponent(
@@ -204,6 +193,6 @@ void EnemiesScene::onPlayerEnter(Entity self, Entity other)
         coordinator.GetComponent<PlayerComponent>(other).health -= 1;
 
         // Enemy dies
-        coordinator.DestroyEntity(self);
+        GameManager::Instance().DestroyEntity(self);
     }
 }

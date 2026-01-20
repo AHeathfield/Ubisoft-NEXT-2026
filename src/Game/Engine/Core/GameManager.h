@@ -30,6 +30,8 @@ public:
     // Get the ECSCoordinator
     Coordinator& GetCoordinator();
 
+    void DestroyEntity(Entity entity);
+
     // System management methods
     void AddSystem(std::shared_ptr<System> system, int stackPos = -1);
     void RemoveSystem(std::shared_ptr<System> system);
@@ -38,6 +40,7 @@ public:
 
     // Scene management methods
     Scene* GetScene(const std::string& name);
+    bool IsSceneInStack(const std::string& name) const;
     void AddScene(const std::string& name, std::unique_ptr<Scene> scene, int stackPos = -1);
     void RemoveScene(const std::string& name);
     void PauseScene(const std::string& name);
@@ -48,7 +51,6 @@ public:
     void ChangeScenePosition(const std::string& name, int newStackPos);
 
 private:
-    bool isSceneInStack(const std::string& name) const;
     void addSceneToStack(std::string name, int stackPos);
 
     void setUpSystems();
@@ -57,6 +59,7 @@ private:
 private:
     std::unordered_map<std::string, std::unique_ptr<Scene>> mScenes;
     std::vector<std::string> mScenesStack; // String so it can ref the mScenes
+    std::vector<std::string> mScenesToBeRemoved;
 
     // Going to do similar stack for systems
     std::vector<std::shared_ptr<System>> mSystemsStack;

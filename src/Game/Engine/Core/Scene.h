@@ -3,7 +3,7 @@
 #include "ECS.h"
 #include <string>
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 /*
  * A Scene is like a collection of entities.
@@ -26,7 +26,7 @@ public:
     void SetActive(const bool active);
 
 
-    std::set<Entity> sceneEntities;
+    std::unordered_set<Entity> sceneEntities;
 
 private:
     bool mActive = true;

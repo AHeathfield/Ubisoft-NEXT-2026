@@ -19,6 +19,8 @@ public:
     void Close() override;
     bool CreateBVHOctree(OctreeNode*& root, const std::unordered_set<Entity>& entities, const Vector3& pos, float size); // An Acceleration method
 
+
+    bool IsInit() const;
     CollisionManifold GetClosestStaticManifold(const ColliderComponent& collider);
     CollisionManifold GetClosestDynamicManifold(const ColliderComponent& collider);
 
@@ -132,6 +134,8 @@ private:
         Entity entA;
         Entity entB;
     };
+
+    bool mIsInit = false;
 
     // This notation is a function pointer with parameters ColliderComponent*
     using CollisionFunc = bool(*)(const ColliderComponent&, const ColliderComponent&);

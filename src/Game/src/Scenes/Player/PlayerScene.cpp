@@ -1,4 +1,5 @@
 #include "PlayerScene.h"
+#include "../DeathScene.h"
 #include "../../Components/PlayerComponent.h"
 #include "../../Components/EnemyComponent.h"
 #include "../../../Engine/Core/GameManager.h"
@@ -14,6 +15,7 @@
 #include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
 #include "../../../Engine/Components/TextComponent.h"
+#include "../../../Engine/Systems/CollisionSystem.h"
 #include <memory>
 #include <string>
 // #include "../../../Engine/src/Components/MeshComponent.h"
@@ -22,8 +24,6 @@
 void PlayerScene::Enter()
 {
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
-
-    coordinator.RegisterComponent<PlayerComponent>();
 
 
 // 	auto testSystem = coordinator.RegisterSystem<TestSystem>();
@@ -64,7 +64,7 @@ void PlayerScene::Enter()
 			mPlayer, CharacterBodyComponent()
 	);
 	coordinator.AddComponent(
-			mPlayer, PlayerComponent{}
+			mPlayer, PlayerComponent{.health = 5}
 	);
 	coordinator.AddComponent(
 			mPlayer, AudioComponent{}
@@ -117,12 +117,6 @@ void PlayerScene::Update(const float deltaTime)
     const auto& playerComp = coordinator.GetComponent<PlayerComponent>(mPlayer);
     auto& textComp = coordinator.GetComponent<TextComponent>(mPlayer);
 
-    textComp.text.pop_back();
-    textComp.text += std::to_string(playerComp.health);
-    if (playerComp.health <= 0)
-    {
-        utility::log("game over");
-    }
 
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
 	auto& character = coordinator.GetComponent<CharacterBodyComponent>(mPlayer);
@@ -232,6 +226,16 @@ void PlayerScene::Update(const float deltaTime)
     // utility::log(transform.GetPosition().GetString());
     mCamera->SetTransform(transform);
     mCamera->UpdateView();
+
+    textComp.text.pop_back();
+    textComp.text += std::to_string(playerComp.health);
+    if (playerComp.health <= 0)
+    {
+        // coordinator.GetSystem<CollisionSystem>()->Close();
+        GameManager::Instance().AddScene("DeathScene", std::make_unique<DeathScene>());
+        return;
+    }
+
 }
 
 
@@ -252,7 +256,7 @@ void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionMan
         coordinator.GetComponent<PlayerComponent>(mPlayer).health -= 1;
 
         // Enemy dies
-        coordinator.DestroyEntity(other);
+        GameManager::Instance().DestroyEntity(other);
     }
 
 
@@ -267,7 +271,7 @@ void PlayerScene::onCollisionStay(Entity self, Entity other, const CollisionMani
 
 void PlayerScene::onCollisionExit(Entity self, Entity other)
 {
-	utility::log("Exit");
+	// utility::log("Exit");
 }
 
 
@@ -401,6 +405,7 @@ void PlayerScene::throwBall()
 
 void PlayerScene::deleteBall(Entity self)
 {
-    GameManager::Instance().GetCoordinator().DestroyEntity(self);
+    DestroyEntity(self);
+    // GameManager::Instance().GetCoordinator().DestroyEntity(self);
 }
 

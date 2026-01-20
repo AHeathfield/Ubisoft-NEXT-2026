@@ -2,6 +2,7 @@
 #include "../Core/GameManager.h"
 #include "../Components/ColliderComponent.h"
 #include "../../config.h"
+#include <cstdint>
 #include <unordered_set>
 #include <vector>
 #include "Render3DSystem.h"
@@ -310,6 +311,8 @@ void CollisionSystem::Init()
 	// Will probably move this method into the start scene or something
 	CreateBVHOctree(mStaticOctree, mStaticEntities, Vector3(0, 0, 0), 100.f);
 	CreateBVHOctree(mDynamicOctree, mDynamicEntities, Vector3(0, 0, 0), 100.f);
+
+    mIsInit = true;
 }
 
 void CollisionSystem::Update(float deltaTime)
@@ -432,6 +435,8 @@ void CollisionSystem::Close()
     mDynamicEntities.clear();
     mCollisions.clear();
     mExitings.clear();
+
+    mIsInit = false;
 }
 
 
@@ -458,6 +463,12 @@ bool CollisionSystem::CreateBVHOctree(OctreeNode*& root, const std::unordered_se
 	// Split octree 5 times, 5 is an arbitrary number that apparently works well
 	splitOctree(root, 5);
 	return true;
+}
+
+
+bool CollisionSystem::IsInit() const
+{
+    return mIsInit;
 }
 
 

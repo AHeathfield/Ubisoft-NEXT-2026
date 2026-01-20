@@ -74,26 +74,57 @@ void GameManager::Close()
 }
 
 
+
 void GameManager::Update(float deltaTime)
 {
+    utility::log("TEST0");
+
     // Updating the scenes (reverse order since its a stack)
-    for (int i = mScenesStack.size() - 1; i >= 0; i--)
+    for (int i = (int)mScenesStack.size() - 1; i >= 0; i--)
     {
-        std::string scene_name = mScenesStack[i];
-        if (mScenes[scene_name]->IsActive())
+        const std::string& scene_name = mScenesStack[i];
+
+        auto it = mScenes.find(scene_name);                // FIXED
+        if (it != mScenes.end() && it->second && it->second->IsActive())
         {
-            mScenes[scene_name]->Update(deltaTime/1000);
+            it->second->Update(deltaTime / 1000.0f);
         }
     }
 
+    utility::log("TEST1");
+
     // Updating the active Systems in correct order
-    for (int i = mSystemsStack.size() - 1; i >= 0; i--)
+    for (int i = (int)mSystemsStack.size() - 1; i >= 0; i--)
     {
+        utility::log("Testing sys: " + std::to_string(i));
         if (mSystemsStack[i]->IsActive())
         {
-            mSystemsStack[i]->Update(deltaTime/1000);
+            mSystemsStack[i]->Update(deltaTime / 1000.0f);
         }
     }
+
+    utility::log("TEST2");
+
+    // Removing scenes queued for removal
+    utility::log(std::to_string(mScenesToBeRemoved.size()));
+    for (int i = (int)mScenesToBeRemoved.size() - 1; i >= 0; i--)
+    {
+        utility::log("BYE");
+        const std::string& name = mScenesToBeRemoved[i];
+
+        auto it = mScenes.find(name);                       // FIXED
+        if (it != mScenes.end() && it->second)
+        {
+            utility::log("HII");
+            it->second->Exit();
+            mScenes.erase(it);
+            utility::vectorRemoveElement(mScenesStack, name);
+            utility::log("Succesfully Removed: " + name);
+        }
+    }
+
+    mScenesToBeRemoved.clear();
+    utility::log("TEST3");
 }
 
 
@@ -116,6 +147,20 @@ Coordinator& GameManager::GetCoordinator()
     return mCoordinator;
 }
 
+
+void GameManager::DestroyEntity(Entity entity)
+{
+    for (int i = (int)mScenesStack.size() - 1; i >= 0; i--)
+    {
+        const std::string& scene_name = mScenesStack[i];
+
+        auto it = mScenes.find(scene_name);                // FIXED
+        if (it != mScenes.end() && it->second && it->second->IsActive())
+        {
+            it->second->DestroyEntity(entity);
+        }
+    }
+}
 
 // Maybe change so they can add the system and it just calls multiple times?? dont really see a use case in that though
 void GameManager::AddSystem(std::shared_ptr<System> system, int stackPos)
@@ -197,18 +242,25 @@ void GameManager::ChangeScenePosition(const std::string& name, int newStackPos)
 }
 
 
+
 Scene* GameManager::GetScene(const std::string& name)
 {
-    if (utility::hasKey(mScenes, name))
+    auto it = mScenes.find(name);                          // FIXED
+    if (it != mScenes.end() && it->second)
     {
-        return mScenes[name].get();
+        return it->second.get();
     }
-    else
-    {
-        return nullptr;
-    }
+    return nullptr;
 }
 
+bool GameManager::IsSceneInStack(const std::string& name) const
+{
+    if(std::find(mScenesStack.begin(), mScenesStack.end(), name) != mScenesStack.end())
+    {
+        return true;
+    }
+    return false;
+}
 
 
 // NOTE: You cannot add a scene thats name already is taken
@@ -235,21 +287,22 @@ void GameManager::RemoveScene(const std::string& name)
 {
     if (utility::hasKey(mScenes, name))
     {
-        mScenes[name]->Exit();
-        mScenes.erase(name);
-        utility::vectorRemoveElement(mScenesStack, name);
+        mScenesToBeRemoved.push_back(name);
     }
     else
     {
         utility::log("Can't remove " + name + " because it is not in the stack.");
     }
+
 }
+
 
 void GameManager::PauseScene(const std::string& name)
 {
-    if (utility::hasKey(mScenes, name))
+    auto it = mScenes.find(name);                          // FIXED
+    if (it != mScenes.end() && it->second)
     {
-        mScenes[name]->SetActive(false);
+        it->second->SetActive(false);
     }
     else
     {
@@ -258,11 +311,13 @@ void GameManager::PauseScene(const std::string& name)
 }
 
 
+
 bool GameManager::IsSceneActive(const std::string& name)
 {
-    if (utility::hasKey(mScenes, name))
+    auto it = mScenes.find(name);                          // FIXED
+    if (it != mScenes.end() && it->second)
     {
-        return mScenes[name]->IsActive();
+        return it->second->IsActive();
     }
     return false;
 }
@@ -308,20 +363,12 @@ bool GameManager::IsScenePaused(const std::string& name)
 
 
 // Private Methods ==========================================
-bool GameManager::isSceneInStack(const std::string& name) const
-{
-    if(std::find(mScenesStack.begin(), mScenesStack.end(), name) != mScenesStack.end())
-    {
-        return true;
-    }
-    return false;
-}
 
 void GameManager::addSceneToStack(std::string name, int stackPos)
 {
     // This is a private method, not going to put a check here if the scene is a registered scene
     // The check will be in the public method
-    if (isSceneInStack(name) == false)
+    if (IsSceneInStack(name) == false)
     {
         if (stackPos >= mScenesStack.size() || stackPos < 0)
         {

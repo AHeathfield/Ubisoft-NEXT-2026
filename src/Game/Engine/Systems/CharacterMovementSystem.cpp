@@ -15,6 +15,9 @@ void CharacterMovementSystem::Update(float deltaTime)
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
     auto collisionSystem = coordinator.GetSystem<CollisionSystem>();
 
+    if (!collisionSystem->IsInit())
+        return;
+
     for (const auto& entity : mEntities)
     {
         auto& transform = coordinator.GetComponent<Transform3DComponent>(entity);

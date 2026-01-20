@@ -1,5 +1,6 @@
 #include "EnemySystem.h"
 #include "../Scenes/Player/PlayerScene.h"
+#include "../Scenes/Enemy/EnemiesScene.h"
 #include "../../Engine/Core/GameManager.h"
 #include "../../Engine/Components/RigidBodyComponent.h"
 #include "../../Engine/Components/Transform3DComponent.h"
@@ -8,6 +9,10 @@ void EnemySystem::Update(float deltaTime)
 {
     GameManager& gm = GameManager::Instance();
     Coordinator& coordinator = gm.GetCoordinator();
+
+    if (!gm.IsSceneInStack("PlayerScene"))
+        return;
+
     auto* playerScene =  static_cast<PlayerScene*>(gm.GetScene("PlayerScene"));
     Vector3 playerPos = playerScene->GetPlayerPosition();
     float speed = 8.f;
@@ -25,7 +30,7 @@ void EnemySystem::Update(float deltaTime)
 
         if (enemyTransform.GetPosition().y > _KILLY)
         {
-            coordinator.DestroyEntity(ent);
+            gm.DestroyEntity(ent);
         }
     }
 }
