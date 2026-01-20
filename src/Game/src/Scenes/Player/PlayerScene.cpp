@@ -5,6 +5,7 @@
 #include "../../../Engine/Systems/Render3DSystem.h"
 #include "../../../../ContestAPI/app.h"
 #include "../../../Engine/Components/Transform3DComponent.h"
+#include "../../../Engine/Components/Transform2DComponent.h"
 #include "../../../Engine/Components/ColliderComponent.h"
 #include "../../../Engine/Components/TimerComponent.h"
 #include "../../../Engine/Components/MeshComponent.h"
@@ -12,6 +13,7 @@
 #include "../../../Engine/Components/RigidBodyComponent.h"
 #include "../../../Engine/Components/CharacterBodyComponent.h"
 #include "../../../Engine/Components/AudioComponent.h"
+#include "../../../Engine/Components/TextComponent.h"
 #include <memory>
 #include <string>
 // #include "../../../Engine/src/Components/MeshComponent.h"
@@ -67,6 +69,17 @@ void PlayerScene::Enter()
 	coordinator.AddComponent(
 			mPlayer, AudioComponent{}
 	);
+	coordinator.AddComponent(
+			mPlayer, TextComponent("Remaining Health: 5", Color(255, 255, 255))
+	);
+	coordinator.AddComponent(
+			mPlayer, Transform2DComponent(
+	                   Vector2(50.f, 700.f),
+	                   0.f,
+	                   Vector2(1.f, 1.f)
+	               )
+	);
+
 	auto& audio = coordinator.GetComponent<AudioComponent>(mPlayer);
 	audio.AddAudio("Music", "./Data/SFX/ChuckNorris_BG.mp3");
 	audio.AddAudio("Shoot", "./Data/SFX/ak47.mp3");
@@ -101,10 +114,19 @@ void PlayerScene::Update(const float deltaTime)
     mThrowCooldown.Increment(deltaTime);
 
 	Coordinator& coordinator = GameManager::Instance().GetCoordinator();
+    const auto& playerComp = coordinator.GetComponent<PlayerComponent>(mPlayer);
+    auto& textComp = coordinator.GetComponent<TextComponent>(mPlayer);
+
+    textComp.text.pop_back();
+    textComp.text += std::to_string(playerComp.health);
+    if (playerComp.health <= 0)
+    {
+        utility::log("game over");
+    }
+
 	auto& transform = coordinator.GetComponent<Transform3DComponent>(mPlayer);
 	auto& character = coordinator.GetComponent<CharacterBodyComponent>(mPlayer);
 	const auto& coll = coordinator.GetComponent<ColliderComponent>(mPlayer);
-    // utility::log("Pos: " + transform.GetPosition().GetString());
 
 
     // Applying custom gravity
@@ -224,15 +246,15 @@ void PlayerScene::onCollisionEnter(Entity self, Entity other, const CollisionMan
 {
     Coordinator& coordinator = GameManager::Instance().GetCoordinator();
 
-    // utility::log("test");
-    // Enemy "Explodes"
     if (coordinator.HasComponent<EnemyComponent>(other))
     {
-        utility::log("Explode");
+        // Subracting health
+        coordinator.GetComponent<PlayerComponent>(mPlayer).health -= 1;
+
+        // Enemy dies
         coordinator.DestroyEntity(other);
     }
 
-    // Need to deduct life
 
 }
 

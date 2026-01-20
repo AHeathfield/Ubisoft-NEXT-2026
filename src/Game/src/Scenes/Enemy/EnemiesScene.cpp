@@ -200,8 +200,10 @@ void EnemiesScene::onPlayerEnter(Entity self, Entity other)
 
     if (coordinator.HasComponent<PlayerComponent>(other))
     {
+        // Subtracting player health
+        coordinator.GetComponent<PlayerComponent>(other).health -= 1;
+
+        // Enemy dies
         coordinator.DestroyEntity(self);
     }
-
-    // Maybe call something on the players end??
 }

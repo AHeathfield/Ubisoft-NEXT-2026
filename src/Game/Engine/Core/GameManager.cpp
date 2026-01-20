@@ -7,6 +7,7 @@
 #include "../Components/Transform3DComponent.h"
 #include "../Components/Transform2DComponent.h"
 #include "../Components/ColliderComponent.h"
+#include "../Components/TextComponent.h"
 #include "../Components/TimerComponent.h"
 #include "../Components/SpriteComponent.h"
 #include "../Components/AudioComponent.h"
@@ -15,6 +16,7 @@
 #include "../Systems/Render3DSystem.h"
 #include "../Systems/TimerSystem.h"
 #include "../Systems/CollisionSystem.h"
+#include "../Systems/TextSystem.h"
 #include "../Systems/CharacterMovementSystem.h"
 // #include "../Systems/CharacterSnapSystem.h"
 #include "../Systems/RigidBodySystem.h"
@@ -41,6 +43,7 @@ void GameManager::Start()
     mCoordinator.RegisterComponent<TimerComponent>();
     mCoordinator.RegisterComponent<MeshComponent>();
     mCoordinator.RegisterComponent<SpriteComponent>();
+    mCoordinator.RegisterComponent<TextComponent>();
     mCoordinator.RegisterComponent<AudioComponent>();
     mCoordinator.RegisterComponent<Transform3DComponent>();
     mCoordinator.RegisterComponent<Transform2DComponent>();
@@ -416,9 +419,18 @@ void GameManager::setUpSystems()
         mCoordinator.SetSystemSignature<TimerSystem>(signature);
     }
 
+    auto textSystem = mCoordinator.RegisterSystem<TextSystem>();
+    {
+        Signature signature;
+        signature.set(mCoordinator.GetComponentType<TextComponent>());
+        signature.set(mCoordinator.GetComponentType<Transform2DComponent>());
+        mCoordinator.SetSystemSignature<TextSystem>(signature);
+    }
+
     // Setting order they are called in
     mSystemsStack.push_back(transform2DSystem);
     mSystemsStack.push_back(transform3DSystem);
+    mSystemsStack.push_back(textSystem);
     mSystemsStack.push_back(spriteSystem);
     mSystemsStack.push_back(render3DSystem);
     mSystemsStack.push_back(collisionSystem);
