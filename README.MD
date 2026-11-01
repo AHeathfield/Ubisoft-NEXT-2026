@@ -1,5 +1,6 @@
 # Cube Blaster
 [![Cube Blaster Youtube Video](https://img.youtube.com/vi/Cd7IS7AuSQY/0.jpg)](https://www.youtube.com/watch?v=Cd7IS7AuSQY)
+
 The theme for this year was to simulate a large number of entities. Cube Blaster is a first person shooter where cubes roll at you on a platform and you have to shoot them off the platform to survive. I made a 3D library and framework with just the standard C++ library in order to make this game. The competition graded documentation, I was running short on time so all there is comments in the code to help unfortunately :(
 
 #Ubi Contest API for Mac & Windows
